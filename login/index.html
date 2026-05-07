@@ -66,10 +66,8 @@
     </div>
 
     <script>
-        /** * The Script ID provided was used to construct the Web App URL.
-         * Format: https://script.google.com/macros/s/[ID]/exec
-         */
-        const SCRIPT_URL = "https://script.google.com/macros/s/1hmAubno_GLuSqLyQnng-jU_5ifoJ00Vr9F0naiAOAkfh4O5x7R8QAuJd/exec";
+        // Updated SCRIPT_URL with your new deployment ID
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqNbnFPl67DNqDpessEhqIL59lSrJE8VhZVxPyD3qJ11qijmbRHuQYJDvgdzVESUL7/exec";
 
         const form = document.getElementById('dataForm');
         const submitBtn = document.getElementById('submitBtn');
@@ -78,7 +76,6 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Disable button and show loading state
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<div class="loader"></div> Sending...';
             statusBox.classList.add('hidden');
@@ -90,12 +87,7 @@
             };
 
             try {
-                /**
-                 * Google Apps Script 'doPost' often requires mode: 'no-cors' 
-                 * if you haven't explicitly set CORS headers in the script.
-                 * However, with 'no-cors', we won't see the response content, 
-                 * but the data will still be sent.
-                 */
+                // Using 'no-cors' mode to reliably send data to Google Apps Script
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors', 
@@ -106,13 +98,11 @@
                     body: JSON.stringify(formData),
                 });
 
-                // Since 'no-cors' doesn't return a status, we assume success 
-                // if the fetch didn't throw an error.
                 form.reset();
-                showStatus('Success! Information sent to the spreadsheet.', 'bg-green-100', 'text-green-700');
+                showStatus('Success! Check your Google Sheet.', 'bg-green-100', 'text-green-700');
             } catch (error) {
-                console.error('Submission Error:', error);
-                showStatus('Error: Could not connect to the database.', 'bg-red-100', 'text-red-700');
+                console.error('Error!', error.message);
+                showStatus('Error sending data. Please check your connection.', 'bg-red-100', 'text-red-700');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = 'Submit Information';
