@@ -1,0 +1,58 @@
+/**
+ * CLOUDFLARE WORKER: Simple Site Protector
+ * This script adds a Basic Authentication layer to your website.
+ * No database required - credentials are hardcoded or stored in environment variables.
+ */
+
+// 1. CONFIGURE YOUR CREDENTIALS HERE
+// In a production environment, you should use 'Secret' environment variables in the Cloudflare Dashboard.
+const USERNAME = "admin";
+const PASSWORD = "password123"; // Change this!
+
+async function handleRequest(request) {
+  const authHeader = request.headers.get("Authorization");
+
+  if (!authHeader) {
+    return new Response("Authentication Required", {
+      status: 401,
+      headers: {
+        "WWW-Authenticate": 'Basic realm="Secure Site"',
+      },
+    });
+  }
+
+  // Basic auth sends credentials as "Basic base64(username:password)"
+  const [scheme, encoded] = authHeader.split(" ");
+  
+  if (scheme !== "Basic" || !encoded) {
+    return new Response("Invalid Authentication Scheme", { status: 400 });
+  }
+
+  try {
+    // Decode the base64 string (works in Cloudflare Workers environment)
+    const decoded = atob(encoded);
+    const [user, pass] = decoded.split(":");
+
+    // 2. VALIDATION LOGIC
+    if (user === USERNAME && pass === PASSWORD) {
+      // Authentication successful! 
+      // Fetch the original content from your website origin.
+      return await fetch(request);
+    } else {
+      // Invalid credentials
+      return new Response("Invalid Username or Password", {
+        status: 401,
+        headers: {
+          "WWW-Authenticate": 'Basic realm="Secure Site"',
+        },
+      });
+    }
+  } catch (e) {
+    return new Response("Authentication Error", { status: 500 });
+  }
+}
+
+// Event listener for the worker
+addEventListener("fetch", (event) => {
+  event.respondWith(handleRequest(event.request));
+});
