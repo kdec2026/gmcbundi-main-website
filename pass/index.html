@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMC Bundi | Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .medical-gradient {
+            background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Auth Overlay -->
+    <div id="auth-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-95 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="National Emblem" class="h-20 mx-auto mb-4">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">GMC BUNDI</h1>
+            <p class="text-gray-500 mb-6 text-sm">Government Medical College, Bundi (Rajasthan)<br>Student Information Portal Access</p>
+            
+            <div class="space-y-4">
+                <div class="relative">
+                    <input type="password" id="passkey" placeholder="Enter Secure Password" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-center tracking-widest">
+                    <div id="auth-error" class="text-red-500 text-xs mt-2 hidden">Incorrect password. Access Denied.</div>
+                </div>
+                <button onclick="verifyAccess()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-lg transition duration-200">
+                    Unlock Portal
+                </button>
+            </div>
+            <p class="mt-6 text-[10px] text-gray-400 uppercase tracking-widest">Secure Administrative Gateway</p>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <header class="medical-gradient text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <img src="https://raw.githubusercontent.com/kanishk2007dev/GMC-n-hssj/refs/heads/main/file_0000000000f472089c4f6c08ffcb8842.png" 
+                         alt="GMC Bundi Logo" class="h-16 w-16 object-contain bg-white rounded-full p-1 shadow-md"
+                         onerror="this.src='https://via.placeholder.com/64?text=GMC'">
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold tracking-tight">GOVERNMENT MEDICAL COLLEGE</h1>
+                        <h2 class="text-lg font-medium opacity-90">BUNDI, RAJASTHAN</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/9/95/Digital_India_logo.svg" alt="Digital India" class="h-10 hidden sm:block">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="Emblem" class="h-12 brightness-0 invert">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation / Sub-header -->
+    <nav class="bg-white border-b sticky top-0 z-40 shadow-sm">
+        <div class="container mx-auto px-4 flex justify-between items-center h-14">
+            <div class="flex gap-6 text-sm font-semibold text-gray-600">
+                <span class="text-blue-700 border-b-2 border-blue-700 py-4 h-full cursor-pointer">BATCH 2025</span>
+                <span class="hover:text-blue-700 py-4 h-full cursor-pointer transition">ADMISSIONS</span>
+                <span class="hover:text-blue-700 py-4 h-full cursor-pointer transition">FACULTY</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.reload()" class="text-gray-500 hover:text-red-600">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-600">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Total Students</p>
+                        <h3 id="stat-total" class="text-2xl font-bold text-gray-800">...</h3>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full text-blue-600">
+                        <i class="fas fa-users text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-600">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Reporting Status</p>
+                        <h3 class="text-2xl font-bold text-gray-800">100%</h3>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full text-green-600">
+                        <i class="fas fa-clipboard-check text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-600">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Academic Session</p>
+                        <h3 class="text-2xl font-bold text-gray-800">2025-26</h3>
+                    </div>
+                    <div class="bg-purple-100 p-3 rounded-full text-purple-600">
+                        <i class="fas fa-calendar-alt text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search & Filters -->
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="relative flex-grow">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="student-search" onkeyup="filterStudents()" placeholder="Search by Name, Father's Name or Email..." 
+                           class="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <select id="gender-filter" onchange="filterStudents()" class="px-4 py-3 rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Genders</option>
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
+                </select>
+                <button onclick="resetFilters()" class="text-blue-600 font-medium px-4">Reset</button>
+            </div>
+        </div>
+
+        <!-- Student Table -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div id="table-loading" class="p-12 flex flex-col items-center justify-center text-gray-500">
+                <div class="loader mb-4"></div>
+                <p>Loading database...</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse" id="student-table" style="display: none;">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-bold">
+                            <th class="px-6 py-4">Roll/S.No</th>
+                            <th class="px-6 py-4">Student Name</th>
+                            <th class="px-6 py-4">Father Name</th>
+                            <th class="px-6 py-4">Category</th>
+                            <th class="px-6 py-4">Mobile</th>
+                            <th class="px-6 py-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-list" class="divide-y divide-gray-100 text-sm">
+                        <!-- Rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="no-results" class="p-12 text-center text-gray-400 hidden">
+                <i class="fas fa-user-slash text-4xl mb-3"></i>
+                <p>No students found matching your criteria.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Student Detail Modal -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden p-4 overflow-y-auto">
+        <div class="fixed inset-0 bg-black bg-opacity-60" onclick="closeModal()"></div>
+        <div class="relative bg-white rounded-2xl max-w-4xl mx-auto shadow-2xl my-8">
+            <div class="medical-gradient h-32 rounded-t-2xl relative">
+                <button onclick="closeModal()" class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 transition">
+                    <i class="fas fa-times w-6 h-6 flex items-center justify-center"></i>
+                </button>
+            </div>
+            <div class="px-8 pb-8 -mt-16">
+                <div class="flex flex-col md:flex-row items-end gap-6 mb-8">
+                    <div class="h-32 w-32 rounded-2xl bg-gray-100 border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
+                        <i class="fas fa-user-md text-5xl text-gray-300"></i>
+                    </div>
+                    <div class="flex-grow pb-2">
+                        <h2 id="modal-name" class="text-3xl font-bold text-gray-800">Student Name</h2>
+                        <p id="modal-sub" class="text-blue-600 font-semibold tracking-wide">MBBS BATCH 2025</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Basic Information</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between border-b pb-2">
+                                    <span class="text-gray-500">Father's Name</span>
+                                    <span id="det-father" class="font-medium text-gray-800">...</span>
+                                </div>
+                                <div class="flex justify-between border-b pb-2">
+                                    <span class="text-gray-500">Gender</span>
+                                    <span id="det-gender" class="font-medium text-gray-800">...</span>
+                                </div>
+                                <div class="flex justify-between border-b pb-2">
+                                    <span class="text-gray-500">Date of Birth</span>
+                                    <span id="det-dob" class="font-medium text-gray-800">...</span>
+                                </div>
+                                <div class="flex justify-between border-b pb-2">
+                                    <span class="text-gray-500">Category</span>
+                                    <span id="det-cat" class="font-medium text-gray-800">...</span>
+                                </div>
+                                <div class="flex justify-between border-b pb-2">
+                                    <span class="text-gray-500">Blood Group</span>
+                                    <span id="det-blood" class="font-medium px-2 bg-red-100 text-red-600 rounded">...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Contact Details</h4>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-phone text-blue-500 w-5"></i>
+                                    <span id="det-phone" class="text-gray-700">...</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-envelope text-blue-500 w-5"></i>
+                                    <span id="det-email" class="text-gray-700">...</span>
+                                </div>
+                                <div class="flex items-start gap-3">
+                                    <i class="fas fa-map-marker-alt text-blue-500 w-5 mt-1"></i>
+                                    <span id="det-address" class="text-gray-700">...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Academic Info</h4>
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
+                                <div class="flex justify-between border-b pb-2 border-gray-200">
+                                    <span class="text-gray-500">Reporting Date</span>
+                                    <span id="det-reporting" class="font-medium text-gray-800">...</span>
+                                </div>
+                                <div class="flex justify-between border-b pb-2 border-gray-200">
+                                    <span class="text-gray-500">Admission Date</span>
+                                    <span id="det-admission" class="font-medium text-gray-800">...</span>
+                                </div>
+                                <div class="flex justify-between border-b pb-2 border-gray-200">
+                                    <span class="text-gray-500">Aadhaar No.</span>
+                                    <span id="det-aadhaar" class="font-medium text-gray-800">...</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-500">12th Marks (%)</span>
+                                    <span id="det-marks" class="font-bold text-green-600">...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Hostel Information</h4>
+                            <div class="flex items-center gap-4 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                <i class="fas fa-hotel text-blue-600 text-2xl"></i>
+                                <div>
+                                    <p class="text-xs text-blue-500 font-bold uppercase">Allocated Room No.</p>
+                                    <p id="det-room" class="text-lg font-bold text-gray-800">...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex justify-center gap-8 mb-6 grayscale opacity-60">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="Emblem" class="h-10">
+                <img src="https://upload.wikimedia.org/wikipedia/en/9/95/Digital_India_logo.svg" alt="Digital India" class="h-10">
+            </div>
+            <p class="text-gray-500 text-sm">© 2025 Government Medical College, Bundi. Managed by Digital India Portal.</p>
+            <p class="text-gray-400 text-[10px] mt-2 uppercase tracking-widest">Confidential Student Data Protection Protocol Active</p>
+        </div>
+    </footer>
+
+    <script>
+        let studentsData = [];
+        const MASTER_PASSWORD = 'BUNDI@2025';
+
+        // Auth Logic
+        function verifyAccess() {
+            const pin = document.getElementById('passkey').value;
+            const error = document.getElementById('auth-error');
+            
+            if (pin === MASTER_PASSWORD) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                loadStudentData();
+            } else {
+                error.classList.remove('hidden');
+                document.getElementById('passkey').classList.add('border-red-500');
+            }
+        }
+
+        // Handle Enter key on auth
+        document.getElementById('passkey').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verifyAccess();
+        });
+
+        // CSV Loading Logic
+        async function loadStudentData() {
+            const files = ['Batch 2025 - Sheet1.csv', 'Batch 2025 - Sheet7.csv'];
+            let combinedRows = [];
+
+            for (let fileName of files) {
+                try {
+                    const response = await fetch(fileName);
+                    const text = await response.text();
+                    
+                    Papa.parse(text, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) {
+                            // Filter out rows that don't look like actual student records 
+                            // (the sheet has header info in the first few rows)
+                            const cleanRows = results.data.filter(row => row['Name'] && row['Name'] !== 'Name' && row['S.No.']);
+                            combinedRows = [...combinedRows, ...cleanRows];
+                            
+                            // Once both are done or if we want to update live
+                            studentsData = combinedRows;
+                            updateDashboard();
+                        }
+                    });
+                } catch (e) {
+                    console.error("Error loading " + fileName, e);
+                }
+            }
+            
+            // Artificial delay to show nice loader
+            setTimeout(() => {
+                document.getElementById('table-loading').style.display = 'none';
+                document.getElementById('student-table').style.display = 'table';
+                renderList(studentsData);
+            }, 800);
+        }
+
+        function updateDashboard() {
+            document.getElementById('stat-total').innerText = studentsData.length;
+        }
+
+        function renderList(data) {
+            const list = document.getElementById('student-list');
+            const noResults = document.getElementById('no-results');
+            list.innerHTML = '';
+
+            if (data.length === 0) {
+                noResults.classList.remove('hidden');
+                return;
+            } else {
+                noResults.classList.add('hidden');
+            }
+
+            data.forEach((student, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-blue-50 transition cursor-pointer';
+                tr.onclick = () => showDetails(student);
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-gray-400">${student['S.No.'] || (index + 1)}</td>
+                    <td class="px-6 py-4 font-semibold text-gray-800">${student['Name']}</td>
+                    <td class="px-6 py-4 text-gray-600">${student['Father Name']}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">${student['Categary'] || 'GEN'}</span>
+                    </td>
+                    <td class="px-6 py-4 text-gray-500">${student['Mobile No.'] || 'N/A'}</td>
+                    <td class="px-6 py-4">
+                        <button class="text-blue-600 hover:text-blue-800 font-medium">
+                            View <i class="fas fa-chevron-right ml-1 text-xs"></i>
+                        </button>
+                    </td>
+                `;
+                list.appendChild(tr);
+            });
+        }
+
+        function filterStudents() {
+            const query = document.getElementById('student-search').value.toLowerCase();
+            const gender = document.getElementById('gender-filter').value;
+
+            const filtered = studentsData.filter(s => {
+                const nameMatch = s['Name']?.toLowerCase().includes(query);
+                const fatherMatch = s['Father Name']?.toLowerCase().includes(query);
+                const emailMatch = s['Email ID']?.toLowerCase().includes(query);
+                const genderMatch = gender === "" || s['Gender']?.toUpperCase() === gender;
+
+                return (nameMatch || fatherMatch || emailMatch) && genderMatch;
+            });
+
+            renderList(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('student-search').value = '';
+            document.getElementById('gender-filter').value = '';
+            renderList(studentsData);
+        }
+
+        // Modal Logic
+        function showDetails(student) {
+            document.getElementById('modal-name').innerText = student['Name'];
+            document.getElementById('det-father').innerText = student['Father Name'] || 'N/A';
+            document.getElementById('det-gender').innerText = student['Gender'] || 'N/A';
+            document.getElementById('det-dob').innerText = student['DOB'] || 'N/A';
+            document.getElementById('det-cat').innerText = student['Categary'] || 'N/A';
+            document.getElementById('det-blood').innerText = student['Blood Group'] || 'N/A';
+            document.getElementById('det-phone').innerText = student['Mobile No.'] || 'N/A';
+            document.getElementById('det-email').innerText = student['Email ID'] || 'N/A';
+            document.getElementById('det-address').innerText = student['Address'] || 'N/A';
+            document.getElementById('det-reporting').innerText = student['Reporting Date'] || 'N/A';
+            document.getElementById('det-admission').innerText = student['Admission Date'] || 'N/A';
+            document.getElementById('det-aadhaar').innerText = student['Student Adhar No.'] || 'N/A';
+            document.getElementById('det-marks').innerText = (student['Percentage'] || student['Marks'] || 'N/A') + '%';
+            document.getElementById('det-room').innerText = student['Hostel Room No.'] || 'Room Assigned on Arrival';
+
+            document.getElementById('detail-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Prevent closing overlay by clicking outside if needed, 
+        // but here it's an auth wall, so we keep it strict.
+    </script>
+</body>
+</html>
