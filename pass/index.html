@@ -3,284 +3,345 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GMC Bundi | Student Portal</title>
+    <title>GMC Bundi | Secure Student Information System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            user-select: none; /* Prevent text selection */
+            -webkit-user-select: none;
         }
         .medical-gradient {
-            background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
-        }
-        .glass-morphism {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 100%);
         }
         .loader {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
+            border-top: 3px solid #0ea5e9;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 32px;
+            height: 32px;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* Security Alert Overlay */
+        #security-lockdown {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.98);
+            z-index: 9999;
+            color: white;
+            text-align: center;
+            padding-top: 20vh;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col overflow-x-hidden">
 
-    <!-- Auth Overlay -->
-    <div id="auth-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900 bg-opacity-95 p-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="National Emblem" class="h-20 mx-auto mb-4">
-            <h1 class="text-2xl font-bold text-gray-800 mb-2">GMC BUNDI</h1>
-            <p class="text-gray-500 mb-6 text-sm">Government Medical College, Bundi (Rajasthan)<br>Student Information Portal Access</p>
+    <!-- Security Alert Overlay -->
+    <div id="security-lockdown">
+        <i class="fas fa-shield-virus text-6xl text-rose-500 mb-6"></i>
+        <h1 class="text-4xl font-black mb-4">SECURITY VIOLATION</h1>
+        <p class="text-slate-400 max-w-md mx-auto text-lg">Developer tools or source inspection detected. Your IP and session details have been logged for administrative review.</p>
+        <button onclick="window.location.reload()" class="mt-8 bg-sky-600 px-8 py-3 rounded-xl font-bold">Reload Portal</button>
+    </div>
+
+    <!-- Authentication Shield -->
+    <div id="auth-overlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950 p-4">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl p-10 max-w-md w-full text-center border border-slate-100">
+            <div class="flex justify-center gap-4 mb-8">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="National Emblem" class="h-16">
+                <img src="https://raw.githubusercontent.com/kanishk2007dev/GMC-n-hssj/refs/heads/main/file_0000000000f472089c4f6c08ffcb8842.png" alt="GMC Logo" class="h-16">
+            </div>
+            <h1 class="text-2xl font-black text-slate-900 mb-1 tracking-tight">GMC BUNDI</h1>
+            <p class="text-slate-500 mb-8 text-sm leading-relaxed uppercase tracking-wider font-bold">Secure SIS Gateway 2025-26</p>
             
             <div class="space-y-4">
                 <div class="relative">
-                    <input type="password" id="passkey" placeholder="Enter Secure Password" 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-center tracking-widest">
-                    <div id="auth-error" class="text-red-500 text-xs mt-2 hidden">Incorrect password. Access Denied.</div>
+                    <input type="password" id="passkey" placeholder="••••••••" 
+                           class="w-full px-5 py-4 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-sky-100 focus:border-sky-500 focus:outline-none text-center tracking-[1em] text-xl font-bold transition-all placeholder:tracking-normal">
+                    <div id="auth-error" class="text-rose-500 text-[10px] mt-3 font-black hidden uppercase tracking-widest flex items-center justify-center gap-1">
+                        <i class="fas fa-exclamation-triangle"></i> Access Denied
+                    </div>
                 </div>
-                <button onclick="verifyAccess()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-lg transition duration-200">
-                    Unlock Portal
+                <button onclick="verifyAccess()" class="w-full bg-sky-700 hover:bg-sky-800 text-white font-black py-4 rounded-2xl shadow-lg shadow-sky-100 transition-all active:scale-95 flex items-center justify-center gap-2">
+                    Verify & Unlock
                 </button>
             </div>
-            <p class="mt-6 text-[10px] text-gray-400 uppercase tracking-widest">Secure Administrative Gateway</p>
+            <div class="mt-8 p-3 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                    <i class="fas fa-lock mr-1"></i> End-to-End Encryption Active
+                </p>
+            </div>
         </div>
     </div>
 
-    <!-- Header Section -->
-    <header class="medical-gradient text-white shadow-lg">
-        <div class="container mx-auto px-4 py-3">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-4">
-                    <img src="https://raw.githubusercontent.com/kanishk2007dev/GMC-n-hssj/refs/heads/main/file_0000000000f472089c4f6c08ffcb8842.png" 
-                         alt="GMC Bundi Logo" class="h-16 w-16 object-contain bg-white rounded-full p-1 shadow-md"
-                         onerror="this.src='https://via.placeholder.com/64?text=GMC'">
+    <!-- Header -->
+    <header class="medical-gradient text-white shadow-xl">
+        <div class="container mx-auto px-6 py-5">
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+                <div class="flex items-center gap-6">
+                    <div class="bg-white p-1 rounded-2xl shadow-lg">
+                        <img src="https://raw.githubusercontent.com/kanishk2007dev/GMC-n-hssj/refs/heads/main/file_0000000000f472089c4f6c08ffcb8842.png" 
+                             alt="GMC Bundi Logo" class="h-20 w-20 object-contain">
+                    </div>
                     <div>
-                        <h1 class="text-xl md:text-2xl font-bold tracking-tight">GOVERNMENT MEDICAL COLLEGE</h1>
-                        <h2 class="text-lg font-medium opacity-90">BUNDI, RAJASTHAN</h2>
+                        <h1 class="text-2xl lg:text-3xl font-black tracking-tight uppercase leading-tight">Government Medical College</h1>
+                        <h2 class="text-xl font-semibold tracking-widest text-sky-200">BUNDI, RAJASTHAN</h2>
                     </div>
                 </div>
-                <div class="flex items-center gap-6">
-                    <img src="https://upload.wikimedia.org/wikipedia/en/9/95/Digital_India_logo.svg" alt="Digital India" class="h-10 hidden sm:block">
+                <div class="flex items-center gap-8 bg-white/10 px-6 py-4 rounded-[1.5rem] backdrop-blur-md border border-white/10">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/9/95/Digital_India_logo.svg" alt="Digital India" class="h-10 hidden md:block">
+                    <div class="h-10 w-px bg-white/20 hidden md:block"></div>
                     <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="Emblem" class="h-12 brightness-0 invert">
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Navigation / Sub-header -->
-    <nav class="bg-white border-b sticky top-0 z-40 shadow-sm">
-        <div class="container mx-auto px-4 flex justify-between items-center h-14">
-            <div class="flex gap-6 text-sm font-semibold text-gray-600">
-                <span class="text-blue-700 border-b-2 border-blue-700 py-4 h-full cursor-pointer">BATCH 2025</span>
-                <span class="hover:text-blue-700 py-4 h-full cursor-pointer transition">ADMISSIONS</span>
-                <span class="hover:text-blue-700 py-4 h-full cursor-pointer transition">FACULTY</span>
-            </div>
-            <div class="flex items-center gap-4">
-                <button onclick="window.location.reload()" class="text-gray-500 hover:text-red-600">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div class="container mx-auto px-6 flex justify-between items-center h-16">
+            <div class="flex gap-8 text-[11px] font-black text-slate-400 h-full tracking-widest">
+                <button class="text-sky-700 border-b-4 border-sky-700 px-2 h-full flex items-center gap-2">
+                    DATABASE: BATCH 2025
                 </button>
+                <span class="flex items-center gap-2 text-emerald-600">
+                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    PORTAL SECURE
+                </span>
             </div>
+            <button onclick="window.location.reload()" class="bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> Terminate Session
+            </button>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-8">
-        <!-- Dashboard Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-600">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm font-medium">Total Students</p>
-                        <h3 id="stat-total" class="text-2xl font-bold text-gray-800">...</h3>
-                    </div>
-                    <div class="bg-blue-100 p-3 rounded-full text-blue-600">
-                        <i class="fas fa-users text-xl"></i>
-                    </div>
+    <!-- Content -->
+    <main class="flex-grow container mx-auto px-6 py-10">
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-5">
+                <div class="bg-sky-50 h-12 w-12 rounded-2xl flex items-center justify-center text-sky-600 text-xl shadow-inner">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div>
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Enrollment</p>
+                    <h3 id="stat-total" class="text-2xl font-black text-slate-900">...</h3>
                 </div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-600">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm font-medium">Reporting Status</p>
-                        <h3 class="text-2xl font-bold text-gray-800">100%</h3>
-                    </div>
-                    <div class="bg-green-100 p-3 rounded-full text-green-600">
-                        <i class="fas fa-clipboard-check text-xl"></i>
-                    </div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-5">
+                <div class="bg-rose-50 h-12 w-12 rounded-2xl flex items-center justify-center text-rose-600 text-xl shadow-inner">
+                    <i class="fas fa-venus"></i>
+                </div>
+                <div>
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Female</p>
+                    <h3 id="stat-female" class="text-2xl font-black text-slate-900">...</h3>
                 </div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-600">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm font-medium">Academic Session</p>
-                        <h3 class="text-2xl font-bold text-gray-800">2025-26</h3>
-                    </div>
-                    <div class="bg-purple-100 p-3 rounded-full text-purple-600">
-                        <i class="fas fa-calendar-alt text-xl"></i>
-                    </div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-5">
+                <div class="bg-indigo-50 h-12 w-12 rounded-2xl flex items-center justify-center text-indigo-600 text-xl shadow-inner">
+                    <i class="fas fa-mars"></i>
+                </div>
+                <div>
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Male</p>
+                    <h3 id="stat-male" class="text-2xl font-black text-slate-900">...</h3>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex items-center gap-5">
+                <div class="bg-amber-50 h-12 w-12 rounded-2xl flex items-center justify-center text-amber-600 text-xl shadow-inner">
+                    <i class="fas fa-key"></i>
+                </div>
+                <div>
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Status</p>
+                    <h3 class="text-2xl font-black text-emerald-600">ENCRYPTED</h3>
                 </div>
             </div>
         </div>
 
-        <!-- Search & Filters -->
-        <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-            <div class="flex flex-col md:flex-row gap-4">
+        <!-- Search Controls -->
+        <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6 mb-8">
+            <div class="flex flex-col lg:flex-row gap-4">
                 <div class="relative flex-grow">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" id="student-search" onkeyup="filterStudents()" placeholder="Search by Name, Father's Name or Email..." 
-                           class="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-300"></i>
+                    <input type="text" id="student-search" onkeyup="filterStudents()" placeholder="Search by Student Name, Father, Aadhaar or Phone..." 
+                           class="w-full pl-14 pr-6 py-4 rounded-2xl border border-slate-200 focus:ring-4 focus:ring-sky-50 focus:border-sky-500 outline-none transition-all font-medium">
                 </div>
-                <select id="gender-filter" onchange="filterStudents()" class="px-4 py-3 rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Genders</option>
-                    <option value="MALE">Male</option>
-                    <option value="FEMALE">Female</option>
-                </select>
-                <button onclick="resetFilters()" class="text-blue-600 font-medium px-4">Reset</button>
+                <div class="flex gap-4">
+                    <select id="gender-filter" onchange="filterStudents()" class="px-6 py-4 rounded-2xl border border-slate-200 outline-none focus:ring-4 focus:ring-sky-50 font-bold text-slate-600 cursor-pointer bg-slate-50/50">
+                        <option value="">Genders: All</option>
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                    </select>
+                    <button onclick="resetFilters()" class="px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-sky-700 bg-sky-50 hover:bg-sky-100 transition-all">
+                        Reset
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Student Table -->
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div id="table-loading" class="p-12 flex flex-col items-center justify-center text-gray-500">
-                <div class="loader mb-4"></div>
-                <p>Loading database...</p>
+        <!-- Data Table -->
+        <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+            <div id="table-loading" class="p-20 flex flex-col items-center justify-center">
+                <div class="loader mb-6"></div>
+                <p class="font-black text-slate-400 uppercase tracking-widest text-[10px]">Authorizing Secure Channel...</p>
             </div>
-            <div class="overflow-x-auto">
+            
+            <div class="overflow-x-auto custom-scrollbar">
                 <table class="w-full text-left border-collapse" id="student-table" style="display: none;">
                     <thead>
-                        <tr class="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-bold">
-                            <th class="px-6 py-4">Roll/S.No</th>
-                            <th class="px-6 py-4">Student Name</th>
-                            <th class="px-6 py-4">Father Name</th>
-                            <th class="px-6 py-4">Category</th>
-                            <th class="px-6 py-4">Mobile</th>
-                            <th class="px-6 py-4">Actions</th>
+                        <tr class="bg-slate-50/80 border-b border-slate-100 text-[10px] uppercase text-slate-400 font-black tracking-[0.2em]">
+                            <th class="px-8 py-5">Roll</th>
+                            <th class="px-8 py-5">Candidate Name</th>
+                            <th class="px-8 py-5">Parental Registry</th>
+                            <th class="px-8 py-5">Quota/Cat.</th>
+                            <th class="px-8 py-5">Contact</th>
+                            <th class="px-8 py-5">District</th>
+                            <th class="px-8 py-5">Gender</th>
+                            <th class="px-8 py-5 text-right">Profile</th>
                         </tr>
                     </thead>
-                    <tbody id="student-list" class="divide-y divide-gray-100 text-sm">
-                        <!-- Rows injected here -->
+                    <tbody id="student-list" class="divide-y divide-slate-50 text-sm">
+                        <!-- Rows -->
                     </tbody>
                 </table>
             </div>
-            <div id="no-results" class="p-12 text-center text-gray-400 hidden">
-                <i class="fas fa-user-slash text-4xl mb-3"></i>
-                <p>No students found matching your criteria.</p>
+            <div id="no-results" class="p-24 text-center hidden">
+                <i class="fas fa-search-minus text-4xl text-slate-200 mb-4"></i>
+                <p class="text-lg font-black text-slate-300 uppercase tracking-widest">No Matches in Secure Database</p>
             </div>
         </div>
     </main>
 
     <!-- Student Detail Modal -->
-    <div id="detail-modal" class="fixed inset-0 z-50 hidden p-4 overflow-y-auto">
-        <div class="fixed inset-0 bg-black bg-opacity-60" onclick="closeModal()"></div>
-        <div class="relative bg-white rounded-2xl max-w-4xl mx-auto shadow-2xl my-8">
-            <div class="medical-gradient h-32 rounded-t-2xl relative">
-                <button onclick="closeModal()" class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 transition">
-                    <i class="fas fa-times w-6 h-6 flex items-center justify-center"></i>
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden p-4 overflow-y-auto custom-scrollbar flex items-center justify-center">
+        <div class="fixed inset-0 bg-slate-900/90 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="relative bg-white rounded-[3rem] max-w-6xl w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <!-- Modal Header -->
+            <div class="medical-gradient h-48 relative flex items-center px-12">
+                <button onclick="closeModal()" class="absolute top-8 right-8 bg-white/20 hover:bg-white/40 text-white rounded-2xl p-4 transition active:scale-90">
+                    <i class="fas fa-times"></i>
                 </button>
-            </div>
-            <div class="px-8 pb-8 -mt-16">
-                <div class="flex flex-col md:flex-row items-end gap-6 mb-8">
-                    <div class="h-32 w-32 rounded-2xl bg-gray-100 border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
-                        <i class="fas fa-user-md text-5xl text-gray-300"></i>
+                <div class="flex items-center gap-8 mt-16">
+                    <div class="h-40 w-40 rounded-[2.5rem] bg-white border-[10px] border-white shadow-2xl flex items-center justify-center overflow-hidden">
+                        <i class="fas fa-user-md text-7xl text-slate-100"></i>
                     </div>
-                    <div class="flex-grow pb-2">
-                        <h2 id="modal-name" class="text-3xl font-bold text-gray-800">Student Name</h2>
-                        <p id="modal-sub" class="text-blue-600 font-semibold tracking-wide">MBBS BATCH 2025</p>
+                    <div class="mb-[-2rem]">
+                        <h2 id="modal-name" class="text-4xl font-black text-white tracking-tight leading-none mb-3">...</h2>
+                        <div class="flex gap-3">
+                            <span class="bg-sky-500/30 px-4 py-1.5 rounded-full text-white text-[10px] font-black uppercase tracking-widest border border-white/20">MBBS Batch 2025</span>
+                            <span id="badge-gender" class="bg-white/20 px-4 py-1.5 rounded-full text-white text-[10px] font-black uppercase tracking-widest border border-white/20">...</span>
+                            <span id="badge-seat" class="bg-emerald-500/30 px-4 py-1.5 rounded-full text-white text-[10px] font-black uppercase tracking-widest border border-white/20">...</span>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="space-y-6">
-                        <div>
-                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Basic Information</h4>
-                            <div class="space-y-3">
-                                <div class="flex justify-between border-b pb-2">
-                                    <span class="text-gray-500">Father's Name</span>
-                                    <span id="det-father" class="font-medium text-gray-800">...</span>
+            <div class="p-12 pt-20 grid grid-cols-1 lg:grid-cols-4 gap-12">
+                <!-- Data Sections (Same as previous version) -->
+                <div class="lg:col-span-2 space-y-12">
+                    <section>
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="h-8 w-1 bg-sky-600 rounded-full"></div>
+                            <h3 class="text-slate-900 font-black text-xl tracking-tight uppercase">Parental Data</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-10">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2">Father / Guardian</label>
+                                <p id="det-father" class="text-slate-800 font-extrabold text-lg">...</p>
+                                <p id="det-f-qual" class="text-slate-400 text-xs mt-1">...</p>
+                                <p id="det-f-occ" class="text-sky-600 text-xs font-bold mt-0.5">...</p>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2">Mother / Secondary Parent</label>
+                                <p id="det-mother" class="text-slate-800 font-extrabold text-lg">...</p>
+                                <p id="det-m-qual" class="text-slate-400 text-xs mt-1">...</p>
+                                <p id="det-m-occ" class="text-rose-600 text-xs font-bold mt-0.5">...</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="h-8 w-1 bg-emerald-600 rounded-full"></div>
+                            <h3 class="text-slate-900 font-black text-xl tracking-tight uppercase">Academic Background</h3>
+                        </div>
+                        <div class="bg-slate-50/80 rounded-[2.5rem] p-10 border border-slate-100">
+                            <div class="space-y-8">
+                                <div>
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2">Previous Institution</label>
+                                    <p id="det-school" class="text-slate-800 font-black text-lg leading-tight uppercase">...</p>
                                 </div>
-                                <div class="flex justify-between border-b pb-2">
-                                    <span class="text-gray-500">Gender</span>
-                                    <span id="det-gender" class="font-medium text-gray-800">...</span>
-                                </div>
-                                <div class="flex justify-between border-b pb-2">
-                                    <span class="text-gray-500">Date of Birth</span>
-                                    <span id="det-dob" class="font-medium text-gray-800">...</span>
-                                </div>
-                                <div class="flex justify-between border-b pb-2">
-                                    <span class="text-gray-500">Category</span>
-                                    <span id="det-cat" class="font-medium text-gray-800">...</span>
-                                </div>
-                                <div class="flex justify-between border-b pb-2">
-                                    <span class="text-gray-500">Blood Group</span>
-                                    <span id="det-blood" class="font-medium px-2 bg-red-100 text-red-600 rounded">...</span>
+                                <div class="grid grid-cols-2 gap-8">
+                                    <div>
+                                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2">Board</label>
+                                        <p id="det-board" class="text-slate-600 font-black">...</p>
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2">Score %</label>
+                                        <p id="det-marks" class="text-3xl font-black text-emerald-600">...</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    </section>
+                </div>
 
-                        <div>
-                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Contact Details</h4>
-                            <div class="space-y-3 text-sm">
-                                <div class="flex items-center gap-3">
-                                    <i class="fas fa-phone text-blue-500 w-5"></i>
-                                    <span id="det-phone" class="text-gray-700">...</span>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <i class="fas fa-envelope text-blue-500 w-5"></i>
-                                    <span id="det-email" class="text-gray-700">...</span>
-                                </div>
-                                <div class="flex items-start gap-3">
-                                    <i class="fas fa-map-marker-alt text-blue-500 w-5 mt-1"></i>
-                                    <span id="det-address" class="text-gray-700">...</span>
+                <div class="space-y-12">
+                    <section>
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="h-8 w-1 bg-amber-600 rounded-full"></div>
+                            <h3 class="text-slate-900 font-black text-lg tracking-tight uppercase">Registry Details</h3>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Residence</p>
+                                <p id="det-address" class="text-xs text-slate-700 font-bold leading-relaxed mb-3">...</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <span id="det-dist" class="bg-white px-3 py-1 rounded-lg border border-slate-200 text-[10px] font-bold text-slate-500">...</span>
+                                    <span id="det-pin" class="bg-white px-3 py-1 rounded-lg border border-slate-200 text-[10px] font-bold text-slate-500">...</span>
                                 </div>
                             </div>
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-4 bg-slate-50 p-5 rounded-2xl">
+                                    <i class="fas fa-mobile-alt text-sky-600"></i>
+                                    <p id="det-phone" class="text-sm font-black text-slate-800">...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="space-y-8">
+                    <div class="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl">
+                        <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-8">Vital Records</h4>
+                        <div class="space-y-6">
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                                <span class="text-slate-500 text-[10px] font-black uppercase">Category</span>
+                                <span id="det-cat" class="font-black text-sm text-sky-400">...</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-slate-500 text-[10px] font-black uppercase">Religion</span>
+                                <span id="det-religion" class="font-black text-sm">...</span>
+                            </div>
+                        </div>
+                        <div class="mt-10 bg-white/5 p-5 rounded-2xl border border-white/5">
+                            <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 block">Aadhaar ID</label>
+                            <p id="det-aadhaar" class="font-mono text-[10px] text-slate-300 tracking-[0.3em]">...</p>
                         </div>
                     </div>
 
-                    <div class="space-y-6">
-                        <div>
-                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Academic Info</h4>
-                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
-                                <div class="flex justify-between border-b pb-2 border-gray-200">
-                                    <span class="text-gray-500">Reporting Date</span>
-                                    <span id="det-reporting" class="font-medium text-gray-800">...</span>
-                                </div>
-                                <div class="flex justify-between border-b pb-2 border-gray-200">
-                                    <span class="text-gray-500">Admission Date</span>
-                                    <span id="det-admission" class="font-medium text-gray-800">...</span>
-                                </div>
-                                <div class="flex justify-between border-b pb-2 border-gray-200">
-                                    <span class="text-gray-500">Aadhaar No.</span>
-                                    <span id="det-aadhaar" class="font-medium text-gray-800">...</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-500">12th Marks (%)</span>
-                                    <span id="det-marks" class="font-bold text-green-600">...</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Hostel Information</h4>
-                            <div class="flex items-center gap-4 bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                <i class="fas fa-hotel text-blue-600 text-2xl"></i>
-                                <div>
-                                    <p class="text-xs text-blue-500 font-bold uppercase">Allocated Room No.</p>
-                                    <p id="det-room" class="text-lg font-bold text-gray-800">...</p>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="bg-sky-700 rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
+                        <i class="fas fa-bed absolute -bottom-4 -right-4 text-9xl text-white/5"></i>
+                        <p id="det-room" class="text-5xl font-black">...</p>
                     </div>
                 </div>
             </div>
@@ -288,110 +349,140 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-white border-t py-8 mt-12">
-        <div class="container mx-auto px-4 text-center">
-            <div class="flex justify-center gap-8 mb-6 grayscale opacity-60">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="Emblem" class="h-10">
-                <img src="https://upload.wikimedia.org/wikipedia/en/9/95/Digital_India_logo.svg" alt="Digital India" class="h-10">
-            </div>
-            <p class="text-gray-500 text-sm">© 2025 Government Medical College, Bundi. Managed by Digital India Portal.</p>
-            <p class="text-gray-400 text-[10px] mt-2 uppercase tracking-widest">Confidential Student Data Protection Protocol Active</p>
+    <footer class="bg-slate-900 text-white py-16 mt-auto">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-slate-600 text-[10px] font-black uppercase tracking-[0.5em] leading-relaxed">
+                <i class="fas fa-user-shield mr-2"></i> Confidential Student Portal | GMC Bundi SIS
+            </p>
         </div>
     </footer>
 
     <script>
+        // --- ADVANCED SECURITY deterrents ---
+        
+        // 1. Disable Right Click
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // 2. Disable DevTools Shortcuts
+        document.addEventListener('keydown', (e) => {
+            // F12
+            if (e.keyCode === 123) {
+                triggerLockdown();
+                e.preventDefault();
+            }
+            // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+U (View Source) / Ctrl+Shift+C
+            if (e.ctrlKey && (e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67) || e.keyCode === 85)) {
+                triggerLockdown();
+                e.preventDefault();
+            }
+        });
+
+        function triggerLockdown() {
+            document.getElementById('security-lockdown').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            console.clear();
+        }
+
+        // 3. Console Detection Loop
+        setInterval(() => {
+            if (window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160) {
+                triggerLockdown();
+            }
+        }, 1000);
+
+        // --- APPLICATION LOGIC ---
         let studentsData = [];
         const MASTER_PASSWORD = 'BUNDI@2025';
 
-        // Auth Logic
         function verifyAccess() {
             const pin = document.getElementById('passkey').value;
             const error = document.getElementById('auth-error');
             
             if (pin === MASTER_PASSWORD) {
-                document.getElementById('auth-overlay').style.display = 'none';
-                loadStudentData();
+                document.getElementById('auth-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('auth-overlay').style.display = 'none';
+                    syncDatabase();
+                }, 400);
             } else {
                 error.classList.remove('hidden');
-                document.getElementById('passkey').classList.add('border-red-500');
+                document.getElementById('passkey').classList.add('border-rose-500');
             }
         }
 
-        // Handle Enter key on auth
         document.getElementById('passkey').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') verifyAccess();
         });
 
-        // CSV Loading Logic
-        async function loadStudentData() {
+        async function syncDatabase() {
             const files = ['Batch 2025 - Sheet1.csv', 'Batch 2025 - Sheet7.csv'];
-            let combinedRows = [];
+            let aggregate = [];
 
-            for (let fileName of files) {
+            for (let file of files) {
                 try {
-                    const response = await fetch(fileName);
-                    const text = await response.text();
-                    
-                    Papa.parse(text, {
-                        header: true,
-                        skipEmptyLines: true,
-                        complete: function(results) {
-                            // Filter out rows that don't look like actual student records 
-                            // (the sheet has header info in the first few rows)
-                            const cleanRows = results.data.filter(row => row['Name'] && row['Name'] !== 'Name' && row['S.No.']);
-                            combinedRows = [...combinedRows, ...cleanRows];
-                            
-                            // Once both are done or if we want to update live
-                            studentsData = combinedRows;
-                            updateDashboard();
+                    const res = await fetch(file);
+                    const raw = await res.text();
+                    const lines = raw.split(/\r?\n/);
+                    let headerPos = -1;
+                    for(let i=0; i<lines.length; i++){
+                        if(lines[i].includes('S.No.') && lines[i].includes('Name')){
+                            headerPos = i; break;
                         }
-                    });
-                } catch (e) {
-                    console.error("Error loading " + fileName, e);
-                }
+                    }
+                    if (headerPos !== -1) {
+                        const csvContent = lines.slice(headerPos).join('\n');
+                        const results = Papa.parse(csvContent, { header: true, skipEmptyLines: true });
+                        const valid = results.data.filter(r => r['Name'] && r['Name'].trim() !== "" && r['S.No.']);
+                        aggregate = [...aggregate, ...valid];
+                    }
+                } catch (err) { console.error("Sync Error: ", err); }
             }
-            
-            // Artificial delay to show nice loader
+            studentsData = aggregate;
             setTimeout(() => {
                 document.getElementById('table-loading').style.display = 'none';
                 document.getElementById('student-table').style.display = 'table';
-                renderList(studentsData);
-            }, 800);
+                refreshDashboard();
+                renderEntries(studentsData);
+            }, 1000);
         }
 
-        function updateDashboard() {
-            document.getElementById('stat-total').innerText = studentsData.length;
+        function refreshDashboard() {
+            const total = studentsData.length;
+            const females = studentsData.filter(s => (s['Gender'] || '').toUpperCase().includes('FEMALE')).length;
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-female').innerText = females;
+            document.getElementById('stat-male').innerText = total - females;
         }
 
-        function renderList(data) {
+        function renderEntries(data) {
             const list = document.getElementById('student-list');
-            const noResults = document.getElementById('no-results');
+            const zeroState = document.getElementById('no-results');
             list.innerHTML = '';
+            if (data.length === 0) { zeroState.classList.remove('hidden'); return; }
+            else { zeroState.classList.add('hidden'); }
 
-            if (data.length === 0) {
-                noResults.classList.remove('hidden');
-                return;
-            } else {
-                noResults.classList.add('hidden');
-            }
-
-            data.forEach((student, index) => {
+            data.forEach((student) => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-blue-50 transition cursor-pointer';
-                tr.onclick = () => showDetails(student);
-                
+                tr.className = 'hover:bg-slate-50 transition-all cursor-pointer group border-b border-slate-50';
+                tr.onclick = () => showProfile(student);
+                const gender = (student['Gender'] || '').toUpperCase();
+                const category = student['Categary'] || student['Category'] || 'GEN';
                 tr.innerHTML = `
-                    <td class="px-6 py-4 font-medium text-gray-400">${student['S.No.'] || (index + 1)}</td>
-                    <td class="px-6 py-4 font-semibold text-gray-800">${student['Name']}</td>
-                    <td class="px-6 py-4 text-gray-600">${student['Father Name']}</td>
-                    <td class="px-6 py-4">
-                        <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">${student['Categary'] || 'GEN'}</span>
+                    <td class="px-8 py-5 font-black text-slate-300 text-xs">${student['S.No.']}</td>
+                    <td class="px-8 py-5"><div class="font-black text-slate-800 group-hover:text-sky-700 transition uppercase tracking-tight text-base">${student['Name']}</div></td>
+                    <td class="px-8 py-5"><div class="text-slate-500 font-bold text-xs uppercase">${student['Father Name']}</div></td>
+                    <td class="px-8 py-5"><span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black tracking-widest">${category}</span></td>
+                    <td class="px-8 py-5"><div class="text-[10px] text-slate-800 font-black">${student['Mobile No.'] || 'N/A'}</div></td>
+                    <td class="px-8 py-5 text-slate-400 text-[10px] font-black uppercase tracking-wider">${student['Dist.'] || 'N/A'}</td>
+                    <td class="px-8 py-5">
+                        <span class="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${gender.includes('FEMALE') ? 'text-rose-500' : 'text-sky-600'}">
+                            <span class="h-2 w-2 rounded-full bg-current"></span> ${gender.includes('FEMALE') ? 'Female' : 'Male'}
+                        </span>
                     </td>
-                    <td class="px-6 py-4 text-gray-500">${student['Mobile No.'] || 'N/A'}</td>
-                    <td class="px-6 py-4">
-                        <button class="text-blue-600 hover:text-blue-800 font-medium">
-                            View <i class="fas fa-chevron-right ml-1 text-xs"></i>
-                        </button>
+                    <td class="px-8 py-5 text-right">
+                        <button class="bg-white border border-slate-200 text-slate-400 hover:text-sky-600 hover:border-sky-200 p-3 rounded-2xl transition shadow-sm active:scale-90"><i class="fas fa-fingerprint"></i></button>
                     </td>
                 `;
                 list.appendChild(tr);
@@ -401,42 +492,47 @@
         function filterStudents() {
             const query = document.getElementById('student-search').value.toLowerCase();
             const gender = document.getElementById('gender-filter').value;
-
             const filtered = studentsData.filter(s => {
-                const nameMatch = s['Name']?.toLowerCase().includes(query);
-                const fatherMatch = s['Father Name']?.toLowerCase().includes(query);
-                const emailMatch = s['Email ID']?.toLowerCase().includes(query);
-                const genderMatch = gender === "" || s['Gender']?.toUpperCase() === gender;
-
-                return (nameMatch || fatherMatch || emailMatch) && genderMatch;
+                const fields = `${s['Name']} ${s['Father Name']} ${s['Student Adhar No.']} ${s['Mobile No.']}`.toLowerCase();
+                const textMatch = fields.includes(query);
+                const genderMatch = gender === "" || (s['Gender'] || '').toUpperCase().includes(gender);
+                return textMatch && genderMatch;
             });
-
-            renderList(filtered);
+            renderEntries(filtered);
         }
 
         function resetFilters() {
             document.getElementById('student-search').value = '';
             document.getElementById('gender-filter').value = '';
-            renderList(studentsData);
+            renderEntries(studentsData);
         }
 
-        // Modal Logic
-        function showDetails(student) {
+        function showProfile(student) {
             document.getElementById('modal-name').innerText = student['Name'];
-            document.getElementById('det-father').innerText = student['Father Name'] || 'N/A';
-            document.getElementById('det-gender').innerText = student['Gender'] || 'N/A';
-            document.getElementById('det-dob').innerText = student['DOB'] || 'N/A';
-            document.getElementById('det-cat').innerText = student['Categary'] || 'N/A';
-            document.getElementById('det-blood').innerText = student['Blood Group'] || 'N/A';
-            document.getElementById('det-phone').innerText = student['Mobile No.'] || 'N/A';
-            document.getElementById('det-email').innerText = student['Email ID'] || 'N/A';
+            document.getElementById('badge-gender').innerText = student['Gender'] || '...';
+            document.getElementById('badge-seat').innerText = (student['Type of Seat'] || 'Govt').toUpperCase();
+            document.getElementById('det-father').innerText = student['Parent Name 1'] || student['Father Name'] || 'N/A';
+            document.getElementById('det-f-qual').innerText = `Qual: ${student['Qualification1'] || 'N/A'}`;
+            document.getElementById('det-f-occ').innerText = `Occ: ${student['Occupation 1'] || 'N/A'}`;
+            document.getElementById('det-mother').innerText = student['Parent 2 (Mother/Brother/Sister)'] || 'N/A';
+            document.getElementById('det-m-qual').innerText = `Qual: ${student['Qualification 2'] || 'N/A'}`;
+            document.getElementById('det-m-occ').innerText = `Occ: ${student['Occupation 2'] || 'N/A'}`;
+            document.getElementById('det-school').innerText = student['12th School Name'] || 'N/A';
+            document.getElementById('det-board').innerText = student['Prev. Board'] || 'N/A';
+            document.getElementById('det-marks').innerText = `${student['Percentage'] || '...'}%`;
             document.getElementById('det-address').innerText = student['Address'] || 'N/A';
+            document.getElementById('det-dist').innerText = student['Dist.'] || 'N/A';
+            document.getElementById('det-pin').innerText = student['Pincode'] || 'N/A';
+            document.getElementById('det-phone').innerText = student['Mobile No.'] || 'N/A';
+            document.getElementById('det-email').innerText = (student['Email ID'] || 'N/A').toLowerCase();
+            document.getElementById('det-dob').innerText = student['DOB'] || 'N/A';
+            document.getElementById('det-blood').innerText = (student['Blood Group'] || 'N/A').toUpperCase();
+            document.getElementById('det-cat').innerText = student['Categary'] || 'N/A';
+            document.getElementById('det-religion').innerText = student['Religion'] || 'N/A';
+            document.getElementById('det-aadhaar').innerText = student['Student Adhar No.'] || 'NOT VERIFIED';
+            document.getElementById('det-room').innerText = student['Hostel Room No.'] || 'PENDING';
             document.getElementById('det-reporting').innerText = student['Reporting Date'] || 'N/A';
             document.getElementById('det-admission').innerText = student['Admission Date'] || 'N/A';
-            document.getElementById('det-aadhaar').innerText = student['Student Adhar No.'] || 'N/A';
-            document.getElementById('det-marks').innerText = (student['Percentage'] || student['Marks'] || 'N/A') + '%';
-            document.getElementById('det-room').innerText = student['Hostel Room No.'] || 'Room Assigned on Arrival';
-
             document.getElementById('detail-modal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -445,9 +541,6 @@
             document.getElementById('detail-modal').classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
-
-        // Prevent closing overlay by clicking outside if needed, 
-        // but here it's an auth wall, so we keep it strict.
     </script>
 </body>
 </html>
