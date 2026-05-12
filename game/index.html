@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Echoes of the Deep</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #010409;
+            color: #22d3ee;
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+            touch-action: none;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            background: radial-gradient(circle, #0a1120 0%, #010409 100%);
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        .scanlines {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud-panel {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            backdrop-filter: blur(10px);
+            pointer-events: none;
+        }
+
+        .btn-action {
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(34, 211, 238, 0.05));
+            border: 1px solid #22d3ee;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.2);
+        }
+
+        .btn-action:hover {
+            background: rgba(34, 211, 238, 0.3);
+            box-shadow: 0 0 25px rgba(34, 211, 238, 0.4);
+        }
+
+        .joystick-base {
+            width: 120px;
+            height: 120px;
+            background: rgba(34, 211, 238, 0.05);
+            border: 2px solid rgba(34, 211, 238, 0.2);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            display: none;
+            z-index: 30;
+        }
+
+        .joystick-handle {
+            width: 44px;
+            height: 44px;
+            background: #22d3ee;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px #22d3ee;
+        }
+
+        @media (pointer: coarse) {
+            .joystick-base { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="scanlines"></div>
+
+    <div class="absolute top-6 left-6 flex flex-col gap-3 z-20">
+        <div class="hud-panel p-4 rounded-xl min-w-[160px]">
+            <div class="text-[10px] text-cyan-400/60 mb-1 font-bold tracking-widest uppercase">Depth Sensor</div>
+            <div class="text-2xl font-bold tracking-widest text-white" id="depth-val">0000.0m</div>
+        </div>
+        <div class="hud-panel p-4 rounded-xl min-w-[160px]">
+            <div class="flex justify-between text-[10px] text-cyan-400/60 mb-1 font-bold tracking-widest uppercase">
+                <span>Power Grid</span>
+                <span id="energy-percent">100%</span>
+            </div>
+            <div class="w-full bg-slate-900 h-2 rounded-full border border-cyan-900/30 overflow-hidden">
+                <div id="energy-bar" class="h-full bg-cyan-400 transition-all duration-200"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlay" class="absolute inset-0 flex items-center justify-center z-50 bg-slate-950/95 backdrop-blur-md p-6">
+        <div class="max-w-md w-full hud-panel p-10 rounded-2xl text-center border-cyan-500/40">
+            <h1 class="text-5xl font-black text-cyan-400 mb-6 tracking-tighter" style="text-shadow: 0 0 20px rgba(34,211,238,0.4)">ECHOES<br>OF THE DEEP</h1>
+            <div id="overlay-msg" class="mb-8 text-cyan-100/70 text-sm leading-relaxed space-y-4">
+                <p>Welcome, Pilot. Visual range is effectively zero.</p>
+                <div class="grid grid-cols-2 gap-4 text-[10px] uppercase tracking-wider">
+                    <div class="border border-cyan-500/20 p-3 rounded bg-cyan-500/5">
+                        <div class="text-cyan-400 font-bold mb-1">Navigation</div>
+                        <div class="opacity-80">WASD / ARROWS</div>
+                    </div>
+                    <div class="border border-cyan-500/20 p-3 rounded bg-cyan-500/5">
+                        <div class="text-cyan-400 font-bold mb-1">Active Sonar</div>
+                        <div class="opacity-80">SPACEBAR</div>
+                    </div>
+                </div>
+                <p class="italic text-xs opacity-50">Navigate the abyss. Collect power echoes. Do not collide with the terrain.</p>
+            </div>
+            <button id="start-btn" class="btn-action w-full py-5 text-xl font-bold rounded-xl active:scale-95 transition-transform">IGNITE ENGINES</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="joystick-base" id="joyBase">
+        <div class="joystick-handle" id="joyHandle"></div>
+    </div>
+    <div class="absolute bottom-10 right-10 z-20 md:hidden">
+        <button id="sonar-btn" class="btn-action w-20 h-20 rounded-full flex flex-col items-center justify-center">
+            <span class="text-[9px] font-bold">SONAR</span>
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startBtn = document.getElementById('start-btn');
+    const overlay = document.getElementById('overlay');
+    const depthEl = document.getElementById('depth-val');
+    const energyBar = document.getElementById('energy-bar');
+    const energyPct = document.getElementById('energy-percent');
+    const sonarBtn = document.getElementById('sonar-btn');
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let gameState = 'MENU'; 
+    let frameCount = 0;
+    let animationId = null;
+    
+    const settings = {
+        accel: 0.35,
+        maxSpeed: 5.0,
+        friction: 0.97,
+        rotSpeed: 0.09,
+        sonarCost: 10,
+        sonarSpeed: 10,
+        sonarMaxRadius: 500,
+        energyDepletion: 0.05,
+        spawnRate: 35
+    };
+
+    let player = {
+        x: width / 2, y: height / 2,
+        vx: 0, vy: 0,
+        angle: Math.PI / 2,
+        energy: 100,
+        depth: 0,
+        radius: 12
+    };
+
+    let keys = {};
+    let sonarPulses = [];
+    let obstacles = [];
+    let pickups = [];
+    let particles = [];
+
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+        if (gameState === 'MENU' || gameState === 'GAMEOVER') {
+            player.x = width / 2;
+            player.y = height / 2;
+        }
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function spawnObstacle() {
+        if (!width || !height) return;
+        const margin = 150;
+        const obs = {
+            x: Math.random() * width,
+            y: player.y + height + margin,
+            size: 60 + Math.random() * 100,
+            revealed: 0,
+            seed: Math.random()
+        };
+        obstacles.push(obs);
+    }
+
+    function spawnPickup() {
+        if (!width || !height) return;
+        const p = {
+            x: 100 + Math.random() * (width - 200),
+            y: player.y + height + 200,
+            size: 14,
+            revealed: 0
+        };
+        pickups.push(p);
+    }
+
+    function emitSonar() {
+        if (player.energy >= settings.sonarCost) {
+            player.energy -= settings.sonarCost;
+            sonarPulses.push({
+                x: player.x,
+                y: player.y,
+                r: 10,
+                alpha: 1.0
+            });
+            return true;
+        }
+        return false;
+    }
+
+    window.addEventListener('keydown', e => keys[e.code] = true);
+    window.addEventListener('keyup', e => keys[e.code] = false);
+    window.addEventListener('keydown', e => {
+        if (e.code === 'Space' && gameState === 'PLAYING') {
+            e.preventDefault();
+            emitSonar();
+        }
+    });
+
+    sonarBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (gameState === 'PLAYING') emitSonar();
+    }, {passive: false});
+
+    const joyBase = document.getElementById('joyBase');
+    const joyHandle = document.getElementById('joyHandle');
+    let joyInput = { x: 0, y: 0, active: false };
+
+    joyBase.addEventListener('touchstart', e => { joyInput.active = true; }, {passive: false});
+    window.addEventListener('touchmove', e => {
+        if (!joyInput.active) return;
+        const touch = e.touches[0];
+        const rect = joyBase.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const dx = touch.clientX - centerX;
+        const dy = touch.clientY - centerY;
+        const dist = Math.min(50, Math.sqrt(dx*dx + dy*dy));
+        const angle = Math.atan2(dy, dx);
+        joyInput.x = (Math.cos(angle) * dist) / 50;
+        joyInput.y = (Math.sin(angle) * dist) / 50;
+        joyHandle.style.transform = `translate(calc(-50% + ${joyInput.x * 35}px), calc(-50% + ${joyInput.y * 35}px))`;
+    }, {passive: false});
+
+    window.addEventListener('touchend', () => {
+        joyInput.active = false;
+        joyInput.x = 0; joyInput.y = 0;
+        joyHandle.style.transform = 'translate(-50%, -50%)';
+    });
+
+    function update() {
+        if (gameState !== 'PLAYING') return;
+
+        player.energy -= settings.energyDepletion;
+        
+        if (keys['ArrowLeft'] || keys['KeyA'] || (joyInput.active && joyInput.x < -0.3)) {
+            player.angle -= settings.rotSpeed;
+        }
+        if (keys['ArrowRight'] || keys['KeyD'] || (joyInput.active && joyInput.x > 0.3)) {
+            player.angle += settings.rotSpeed;
+        }
+
+        if (keys['ArrowUp'] || keys['KeyW'] || (joyInput.active && joyInput.y < -0.3)) {
+            player.vx += Math.cos(player.angle) * settings.accel;
+            player.vy += Math.sin(player.angle) * settings.accel;
+            player.energy -= 0.08;
+            
+            if (frameCount % 3 === 0) {
+                particles.push({
+                    x: player.x - Math.cos(player.angle) * 15,
+                    y: player.y - Math.sin(player.angle) * 15,
+                    vx: -Math.cos(player.angle) * 2 + (Math.random() - 0.5),
+                    vy: -Math.sin(player.angle) * 2 + (Math.random() - 0.5),
+                    life: 1.0,
+                    size: Math.random() * 3 + 1
+                });
+            }
+        }
+
+        player.vx *= settings.friction;
+        player.vy *= settings.friction;
+        player.x += player.vx;
+        player.y += player.vy;
+
+        if (player.x < 20) player.x = 20;
+        if (player.x > width - 20) player.x = width - 20;
+
+        player.depth += Math.max(0, player.vy * 0.1);
+        player.depth += 0.02;
+
+        depthEl.innerText = `${player.depth.toFixed(1).padStart(6, '0')}m`;
+        energyBar.style.width = `${Math.max(0, player.energy)}%`;
+        energyPct.innerText = `${Math.max(0, Math.ceil(player.energy))}%`;
+        
+        if (player.energy <= 0) endGame("SYSTEM CRITICAL: POWER EXHAUSTED");
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx; p.y += p.vy;
+            p.life -= 0.02;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        for (let i = sonarPulses.length - 1; i >= 0; i--) {
+            let s = sonarPulses[i];
+            s.r += settings.sonarSpeed;
+            s.alpha -= 0.007;
+
+            obstacles.forEach(obs => {
+                const dx = obs.x - s.x;
+                const dy = obs.y - s.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (Math.abs(dist - s.r) < 40) obs.revealed = 1.0;
+            });
+
+            pickups.forEach(p => {
+                const dx = p.x - s.x;
+                const dy = p.y - s.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (Math.abs(dist - s.r) < 40) p.revealed = 1.0;
+            });
+
+            if (s.alpha <= 0 || s.r > settings.sonarMaxRadius) sonarPulses.splice(i, 1);
+        }
+
+        obstacles.forEach((obs, idx) => {
+            if (obs.revealed > 0) obs.revealed -= 0.003;
+            const dx = obs.x - player.x;
+            const dy = obs.y - (player.y);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < (obs.size / 2.2) + player.radius) {
+                endGame("STRUCTURAL FAILURE: COLLISION DETECTED");
+            }
+            if (obs.y < player.y - height) obstacles.splice(idx, 1);
+        });
+
+        pickups.forEach((p, idx) => {
+            if (p.revealed > 0) p.revealed -= 0.003;
+            const dx = p.x - player.x;
+            const dy = p.y - player.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < p.size + player.radius) {
+                player.energy = Math.min(100, player.energy + 20);
+                pickups.splice(idx, 1);
+            }
+            if (p.y < player.y - height) pickups.splice(idx, 1);
+        });
+
+        if (frameCount % settings.spawnRate === 0) spawnObstacle();
+        if (frameCount % 350 === 0) spawnPickup();
+    }
+
+    function draw() {
+        if (!ctx) return;
+        
+        ctx.fillStyle = '#010409';
+        ctx.fillRect(0, 0, width, height);
+        frameCount++;
+
+        ctx.save();
+        ctx.translate(0, -player.y + height / 2);
+
+        particles.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${p.life * 0.5})`;
+            ctx.fill();
+        });
+
+        obstacles.forEach(obs => {
+            if (obs.revealed <= 0) return;
+            ctx.beginPath();
+            ctx.arc(obs.x, obs.y, obs.size / 2, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(34, 211, 238, ${obs.revealed * 0.1})`;
+            ctx.strokeStyle = `rgba(34, 211, 238, ${obs.revealed * 0.6})`;
+            ctx.lineWidth = 2;
+            ctx.fill();
+            ctx.stroke();
+        });
+
+        pickups.forEach(p => {
+            if (p.revealed <= 0) return;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${p.revealed})`;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "#22d3ee";
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        });
+
+        sonarPulses.forEach(s => {
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(34, 211, 238, ${s.alpha})`;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        });
+
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.rotate(player.angle);
+        
+        const ambient = ctx.createRadialGradient(0, 0, 0, 0, 0, 80);
+        ambient.addColorStop(0, 'rgba(34, 211, 238, 0.1)');
+        ambient.addColorStop(1, 'rgba(34, 211, 238, 0)');
+        ctx.fillStyle = ambient;
+        ctx.beginPath(); ctx.arc(0, 0, 80, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = "#22d3ee";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 15, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath(); ctx.arc(7, 0, 4, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(-18, -5, 4, 10);
+
+        ctx.restore();
+        ctx.restore();
+
+        update();
+        animationId = requestAnimationFrame(draw);
+    }
+
+    function resetGame() {
+        player = {
+            x: width / 2, y: height / 2,
+            vx: 0, vy: 0,
+            angle: Math.PI / 2,
+            energy: 100,
+            depth: 0,
+            radius: 12
+        };
+        sonarPulses = [];
+        obstacles = [];
+        pickups = [];
+        particles = [];
+        frameCount = 0;
+        
+        for(let i=0; i<5; i++) {
+            const obs = {
+                x: Math.random() * width,
+                y: player.y + (Math.random() * height) + 200,
+                size: 60 + Math.random() * 80,
+                revealed: 0,
+                seed: Math.random()
+            };
+            obstacles.push(obs);
+        }
+    }
+
+    function startGame() {
+        if (gameState === 'PLAYING') return;
+        
+        resetGame();
+        gameState = 'PLAYING';
+        overlay.classList.add('hidden');
+        
+        setTimeout(() => emitSonar(), 100);
+    }
+
+    function endGame(msg) {
+        if (gameState === 'GAMEOVER') return;
+        
+        gameState = 'GAMEOVER';
+        overlay.classList.remove('hidden');
+        document.getElementById('overlay-msg').innerHTML = `
+            <div class="text-red-500 font-bold text-lg mb-2 uppercase tracking-tighter">${msg}</div>
+            <div class="text-white text-4xl font-black mb-4">${Math.floor(player.depth)}m</div>
+            <p class="text-[10px] opacity-40 uppercase">Communications Disconnected. Attempting hardware recovery.</p>
+        `;
+        startBtn.innerText = "DEPLOY REPLACEMENT SUB";
+    }
+
+    startBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startGame();
+    });
+
+    window.onload = () => {
+        resize();
+        if (!animationId) draw();
+    };
+</script>
+</body>
+</html>
