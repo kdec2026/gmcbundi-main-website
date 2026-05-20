@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Memory Match</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Inter & Poppins) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti for Win Celebrations -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top, #1e1b4b 0%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* 3D Card Flip CSS */
+        .card-container {
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+
+        .card-container.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .card-front {
+            transform: rotateY(180deg);
+        }
+
+        /* Input shake animation on wrong password */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .shake-error {
+            animation: shake 0.4s ease-in-out;
+            border-color: #ef4444 !important;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e1b4b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4f46e5;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-slate-100 flex flex-col justify-between overflow-x-hidden pb-8">
+
+    <!-- Password Authentication Gate Overlay -->
+    <div id="passwordGate" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-50 flex items-center justify-center p-4 transition-all duration-500">
+        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 p-6 sm:p-8 rounded-3xl max-w-md w-full text-center shadow-2xl relative">
+            <div class="absolute -top-10 -left-10 w-28 h-28 bg-indigo-500/10 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-10 -right-10 w-28 h-28 bg-pink-500/10 rounded-full blur-3xl"></div>
+
+            <div class="relative z-10">
+                <div class="w-16 h-16 bg-indigo-600/20 text-indigo-400 rounded-2xl mx-auto flex items-center justify-center mb-5 border border-indigo-500/20">
+                    <i class="fa-solid fa-lock text-2xl"></i>
+                </div>
+                
+                <h2 class="text-xl sm:text-2xl font-bold text-white mb-2">Security Verification</h2>
+                <p class="text-xs text-slate-400 mb-6">Enter the developer's name to unlock the Match Game.</p>
+
+                <div class="space-y-4">
+                    <input type="password" id="passwordInput" placeholder="DEVELOPER NAME (CAPITAL LETTERS)" 
+                           class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-center text-sm tracking-wider font-semibold uppercase text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-all">
+                    
+                    <button onclick="verifyPassword()" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm tracking-wide transition-all shadow-lg shadow-indigo-600/30">
+                        Unlock Board
+                    </button>
+                </div>
+
+                <p class="text-[11px] text-slate-500 mt-5">
+                    <span class="font-bold text-indigo-400">Hint:</span> The developer's name starts with K.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Area -->
+    <header class="w-full max-w-4xl mx-auto px-4 pt-6 pb-2 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="bg-indigo-600 p-2.5 rounded-2xl shadow-lg shadow-indigo-500/30 animate-pulse">
+                <i class="fa-solid fa-brain text-2xl text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+                    MEMORISE
+                </h1>
+                <p class="text-xs text-slate-400 tracking-wider uppercase font-semibold">The Ultimate Card Match</p>
+            </div>
+        </div>
+
+        <!-- Global Control Buttons -->
+        <div class="flex items-center gap-2">
+            <button id="soundToggle" onclick="toggleMute()" class="w-11 h-11 rounded-xl bg-slate-800/80 border border-slate-700/50 hover:bg-slate-700/80 flex items-center justify-center transition-all duration-300 shadow-md text-indigo-400 hover:text-indigo-300" title="Toggle Sound">
+                <i id="soundIcon" class="fa-solid fa-volume-high text-lg"></i>
+            </button>
+            <button onclick="resetGame()" class="px-5 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-2 transition-all duration-300 shadow-lg shadow-indigo-600/30">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>Restart</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hidden container holding required stats to prevent Javascript runtime crashes -->
+    <div class="hidden">
+        <span id="timer">00:00</span>
+        <span id="moves">0</span>
+        <span id="accuracy">100%</span>
+        <span id="currentModeLabel">Classic (8 Cards)</span>
+        <button id="btnModeClassic"></button>
+        <button id="btnModeDouble"></button>
+        <span id="bestTimeClassic">-</span>
+        <span id="bestTimeDouble">-</span>
+    </div>
+
+    <!-- Main Game Section (Centered Layout) -->
+    <main class="w-full max-w-4xl mx-auto px-4 flex-grow flex flex-col items-center justify-center mt-6">
+        
+        <!-- Grid Wrapper Container -->
+        <div class="w-full bg-slate-900/40 backdrop-blur-sm border border-slate-800/80 rounded-3xl p-4 sm:p-6 shadow-2xl relative min-h-[420px] flex items-center justify-center">
+            
+            <!-- Game Loading/Ready Indicator -->
+            <div id="gridLoader" class="absolute inset-0 bg-slate-950/90 rounded-3xl flex flex-col items-center justify-center gap-3 z-10 transition-opacity duration-300">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+                <p class="text-slate-400 font-medium">Shuffling Cards...</p>
+            </div>
+
+            <!-- Grid Component -->
+            <div id="gameGrid" class="grid gap-3 sm:gap-4 w-full h-full max-w-4xl mx-auto">
+                <!-- Cards are dynamically injected here by JS -->
+            </div>
+
+        </div>
+        
+        <p class="text-xs text-slate-500 mt-4 text-center">
+            <i class="fa-solid fa-cake-candles text-pink-500 mr-1 animate-bounce"></i> Match all the items to reveal a special surprise!
+        </p>
+
+    </main>
+
+    <!-- Custom Victory Modal (Happy Birthday Naveen Sharma) -->
+    <div id="victoryModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-pink-500/30 rounded-3xl p-6 sm:p-10 max-w-md w-full text-center shadow-2xl relative overflow-hidden transform scale-95 transition-transform duration-300">
+            <!-- Decorative Birthday Lights -->
+            <div class="absolute -top-12 -left-12 w-32 h-32 bg-indigo-500/20 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-pink-500/20 rounded-full blur-3xl"></div>
+
+            <div class="relative z-10">
+                <div class="w-20 h-20 bg-gradient-to-tr from-pink-500 via-purple-500 to-yellow-400 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-pink-500/20 mb-6 animate-bounce">
+                    <i class="fa-solid fa-cake-candles text-4xl text-white"></i>
+                </div>
+                
+                <h3 class="text-3xl font-black bg-gradient-to-r from-pink-400 via-amber-300 to-indigo-300 bg-clip-text text-transparent mb-3 leading-tight tracking-wide">
+                    Happy Birthday<br>Naveen Sharma! 🎉
+                </h3>
+                <p class="text-sm text-slate-300 mb-8 leading-relaxed">
+                    Wishing you an incredible year ahead filled with joy, prosperity, and perfect matches! 🎂🎈✨
+                </p>
+
+                <!-- Hidden recap values to keep script processes healthy -->
+                <div class="hidden">
+                    <span id="recapTime">00:00</span>
+                    <span id="recapMoves">0</span>
+                    <span id="recapAccuracy">100%</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="closeVictoryModal()" class="w-full py-3 px-4 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-400 font-semibold transition-all text-sm">
+                        View Board
+                    </button>
+                    <button onclick="restartFromVictory()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-bold transition-all shadow-lg shadow-indigo-600/30 text-sm">
+                        Play Again
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Toast Component -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 border border-indigo-500/40 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 transform translate-y-24 opacity-0 transition-all duration-300 z-50">
+        <div id="toastIconContainer" class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+            <i class="fa-solid fa-info"></i>
+        </div>
+        <div>
+            <p id="toastMessage" class="text-sm font-semibold text-slate-200">System Notification</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-4xl mx-auto px-4 mt-8 text-center text-xs text-slate-600 border-t border-slate-900 pt-6">
+        <p>© 2026 Memorise. Engineered for high responsiveness and sleek engagement.</p>
+    </footer>
+
+    <script>
+        // Preset Image Deck provided by user
+        const DEFAULT_URLS = [
+            "https://www.planethealth.in/image/cache/catalog/21977-500x500.JPG",
+            "https://moodwear.pk/wp-content/uploads/2025/03/IMG_3273-scaled.jpg",
+            "https://5.imimg.com/data5/SELLER/Default/2025/1/480576751/NY/NO/NK/237518948/71t1d7z39fl-1000x1000.jpg",
+            "https://i0.wp.com/adultslove.in/wp-content/uploads/2022/08/Lifelike-Pocket-Pussy-Male-Masturbator.jpg"
+        ];
+
+        // Fallbacks
+        const FALLBACKS = [
+            { bg: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)", label: "PH Health", icon: "fa-prescription-bottle-medical" },
+            { bg: "linear-gradient(135deg, #ec4899 0%, #db2777 100%)", label: "Mood Wear", icon: "fa-shirt" },
+            { bg: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", label: "Premium Item", icon: "fa-box-open" },
+            { bg: "linear-gradient(135deg, #a855f7 0%, #9333ea 100%)", label: "L-Pocket P", icon: "fa-puzzle-piece" }
+        ];
+
+        // Active State variables
+        let imageUrls = [...DEFAULT_URLS];
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairsCount = 0;
+        let movesCount = 0;
+        let correctMatches = 0;
+        let isChecking = false;
+        let gameMode = 'classic'; // 'classic' (8 cards) or 'double' (16 cards)
+        let isMuted = false;
+
+        // Timer State variables
+        let timerInterval = null;
+        let timeElapsed = 0; 
+        let gameStarted = false;
+
+        // Audio Context (Synthesized sound effects)
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Check password validation
+        function verifyPassword() {
+            const inputField = document.getElementById('passwordInput');
+            const password = inputField.value.trim().toUpperCase();
+
+            // Accepts KANISHK
+            if (password === 'KANISHK') {
+                playSynthSound('match');
+                const gate = document.getElementById('passwordGate');
+                gate.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    gate.classList.add('hidden');
+                }, 500);
+                showToast("Access Granted! Enjoy the game.", "success");
+            } else {
+                playSynthSound('mismatch');
+                inputField.classList.add('shake-error');
+                showToast("Incorrect Password!", "info");
+                setTimeout(() => {
+                    inputField.classList.remove('shake-error');
+                }, 400);
+            }
+        }
+
+        // Add Enter key listener to password input
+        document.getElementById('passwordInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                verifyPassword();
+            }
+        });
+
+        // Synthesize modern high quality game sounds using Web Audio API
+        function playSynthSound(type) {
+            if (isMuted) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'flip') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(450, now + 0.15);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'match') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); 
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); 
+                    osc.frequency.setValueAtTime(783.99, now + 0.16); 
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'mismatch') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'win') {
+                    const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, i) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        
+                        noteOsc.type = 'sine';
+                        noteOsc.frequency.setValueAtTime(freq, now + (i * 0.08));
+                        noteGain.gain.setValueAtTime(0.15, now + (i * 0.08));
+                        noteGain.gain.linearRampToValueAtTime(0.01, now + (i * 0.08) + 0.3);
+                        
+                        noteOsc.start(now + (i * 0.08));
+                        noteOsc.stop(now + (i * 0.08) + 0.3);
+                    });
+                }
+            } catch (e) {
+                console.warn("Audio Context fail: ", e);
+            }
+        }
+
+        // Sound Muting
+        function toggleMute() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('soundIcon');
+            const btn = document.getElementById('soundToggle');
+            if (isMuted) {
+                icon.className = 'fa-solid fa-volume-xmark text-lg';
+                btn.classList.add('text-pink-400');
+                btn.classList.remove('text-indigo-400');
+                showToast("Sound Muted", "info");
+            } else {
+                icon.className = 'fa-solid fa-volume-high text-lg';
+                btn.classList.add('text-indigo-400');
+                btn.classList.remove('text-pink-400');
+                showToast("Sound Unmuted", "info");
+            }
+        }
+
+        // Card Fallback Handler
+        function handleImageError(imgElement, index) {
+            const fallback = FALLBACKS[index % 4];
+            const parent = imgElement.parentElement;
+            
+            const fallbackDiv = document.createElement('div');
+            fallbackDiv.className = "w-full h-full flex flex-col items-center justify-center p-3 text-center";
+            fallbackDiv.style.background = fallback.bg;
+            fallbackDiv.innerHTML = `
+                <i class="fa-solid ${fallback.icon} text-3xl mb-1 text-white filter drop-shadow"></i>
+                <span class="text-xs font-bold text-white tracking-wide truncate max-w-full">${fallback.label}</span>
+            `;
+            
+            parent.innerHTML = '';
+            parent.appendChild(fallbackDiv);
+        }
+
+        // Initialize Game Environment
+        function initGame() {
+            clearInterval(timerInterval);
+            timeElapsed = 0;
+            gameStarted = false;
+            
+            movesCount = 0;
+            correctMatches = 0;
+            matchedPairsCount = 0;
+            flippedCards = [];
+            isChecking = false;
+
+            // Simple Classic mode configuration
+            let gameSet = [...imageUrls];
+
+            const deck = [];
+            gameSet.forEach((url, originalIndex) => {
+                deck.push({ id: originalIndex * 2, url: url, pairId: originalIndex });
+                deck.push({ id: originalIndex * 2 + 1, url: url, pairId: originalIndex });
+            });
+
+            // Fisher-Yates shuffle
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+
+            cards = deck;
+
+            const gridLoader = document.getElementById('gridLoader');
+            gridLoader.style.opacity = '1';
+            gridLoader.style.pointerEvents = 'auto';
+
+            setTimeout(() => {
+                renderGrid();
+                gridLoader.style.opacity = '0';
+                gridLoader.style.pointerEvents = 'none';
+            }, 600);
+        }
+
+        // Render Board UI
+        function renderGrid() {
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = '';
+
+            grid.className = "grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-2xl mx-auto aspect-[4/2]";
+
+            cards.forEach((card) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = "card-container relative cursor-pointer w-full h-full aspect-square";
+                cardEl.setAttribute('data-id', card.id);
+                cardEl.setAttribute('onclick', `flipCard(${card.id})`);
+
+                cardEl.innerHTML = `
+                    <div class="card-inner absolute inset-0 w-full h-full rounded-2xl shadow-lg border border-slate-800/60 transition-transform duration-500">
+                        
+                        <!-- Card Back -->
+                        <div class="card-back absolute inset-0 w-full h-full rounded-2xl bg-gradient-to-br from-indigo-950 to-slate-900 border border-slate-800 flex flex-col items-center justify-center p-3">
+                            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-950/60 border border-slate-800/50 flex items-center justify-center text-indigo-400">
+                                <i class="fa-solid fa-question text-lg sm:text-xl"></i>
+                            </div>
+                        </div>
+
+                        <!-- Card Front -->
+                        <div class="card-front absolute inset-0 w-full h-full rounded-2xl bg-slate-950 overflow-hidden border border-indigo-500/30 flex items-center justify-center p-2">
+                            <div class="relative w-full h-full flex items-center justify-center bg-slate-900/40 rounded-xl overflow-hidden">
+                                <img src="${card.url}" 
+                                     alt="Game Item" 
+                                     class="max-w-full max-h-full object-contain pointer-events-none select-none transition-transform duration-300"
+                                     onerror="handleImageError(this, ${card.pairId})">
+                            </div>
+                        </div>
+
+                    </div>
+                `;
+
+                grid.appendChild(cardEl);
+            });
+        }
+
+        // Interaction Logic when user clicks a card
+        function flipCard(cardId) {
+            if (isChecking) return;
+
+            if (!gameStarted) {
+                gameStarted = true;
+                startTimer();
+            }
+
+            const cardEl = document.querySelector(`[data-id="${cardId}"]`);
+            if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched')) {
+                return;
+            }
+
+            playSynthSound('flip');
+            cardEl.classList.add('flipped');
+            
+            const cardObj = cards.find(c => c.id === cardId);
+            flippedCards.push({ element: cardEl, data: cardObj });
+
+            if (flippedCards.length === 2) {
+                isChecking = true;
+                movesCount++;
+                checkMatch();
+            }
+        }
+
+        // Check if the pair matches
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+
+            if (card1.data.pairId === card2.data.pairId) {
+                correctMatches++;
+                matchedPairsCount++;
+                
+                setTimeout(() => {
+                    playSynthSound('match');
+                    card1.element.classList.add('matched');
+                    card2.element.classList.add('matched');
+                    
+                    card1.element.querySelector('.card-inner').classList.add('border-emerald-500/50', 'shadow-emerald-500/10');
+                    card2.element.querySelector('.card-inner').classList.add('border-emerald-500/50', 'shadow-emerald-500/10');
+
+                    flippedCards = [];
+                    isChecking = false;
+
+                    if (matchedPairsCount === 4) {
+                        triggerWinState();
+                    }
+                }, 400);
+
+            } else {
+                setTimeout(() => {
+                    playSynthSound('mismatch');
+                    card1.element.classList.remove('flipped');
+                    card2.element.classList.remove('flipped');
+                    
+                    flippedCards = [];
+                    isChecking = false;
+                }, 1000);
+            }
+        }
+
+        // Timer setup
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeElapsed++;
+            }, 1000);
+        }
+
+        // Win State & Birthday surprise
+        function triggerWinState() {
+            clearInterval(timerInterval);
+            playSynthSound('win');
+
+            // Trigger Confetti
+            const end = Date.now() + 4000;
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#6366f1', '#a855f7', '#ec4899', '#f59e0b']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#6366f1', '#a855f7', '#ec4899', '#f59e0b']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+
+            // Show victory layout modal
+            const victoryModal = document.getElementById('victoryModal');
+            victoryModal.classList.remove('hidden');
+            setTimeout(() => {
+                victoryModal.querySelector('.transform').classList.remove('scale-95');
+                victoryModal.querySelector('.transform').classList.add('scale-100');
+            }, 50);
+        }
+
+        function closeVictoryModal() {
+            const victoryModal = document.getElementById('victoryModal');
+            victoryModal.querySelector('.transform').classList.add('scale-95');
+            victoryModal.querySelector('.transform').classList.remove('scale-100');
+            setTimeout(() => {
+                victoryModal.classList.add('hidden');
+            }, 300);
+        }
+
+        function restartFromVictory() {
+            closeVictoryModal();
+            resetGame();
+        }
+
+        function resetGame() {
+            initGame();
+            showToast("Gameboard rearranged!", "info");
+        }
+
+        // Custom Toasts
+        function showToast(message, type = "info") {
+            const toast = document.getElementById('toast');
+            const iconContainer = document.getElementById('toastIconContainer');
+            const msgEl = document.getElementById('toastMessage');
+
+            msgEl.innerText = message;
+
+            if (type === "success") {
+                iconContainer.className = "w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400";
+                iconContainer.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            } else {
+                iconContainer.className = "w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400";
+                iconContainer.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+            }
+
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+
+        window.onload = function() {
+            initGame();
+        };
+    </script>
+</body>
+</html>
