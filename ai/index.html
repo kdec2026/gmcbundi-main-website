@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus AI | Intelligent Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.0/lucide.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+        .message-bubble {
+            max-width: 85%;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .typing-dot {
+            animation: typing 1.4s infinite;
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            margin: 0 1px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden text-gray-900">
+
+    <!-- Navigation -->
+    <nav class="flex items-center justify-between px-6 py-4 bg-white/80 backdrop-blur-md border-b sticky top-0 z-10">
+        <div class="flex items-center gap-2">
+            <div class="bg-blue-600 p-1.5 rounded-lg">
+                <i data-lucide="zap" class="w-5 h-5 text-white fill-current"></i>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-gray-800">Nexus AI</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <button class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">History</button>
+            <button class="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-800 transition-all shadow-sm">Sign Up</button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar px-4 sm:px-6 py-8" id="chat-container">
+        <!-- Initial Welcome State -->
+        <div id="welcome-state" class="max-w-2xl mx-auto mt-20 text-center space-y-6">
+            <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight">How can I help you today?</h1>
+            <p class="text-gray-500 text-lg">Nexus combines the power of search with advanced reasoning to give you accurate, up-to-date answers.</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-12 text-left">
+                <button onclick="prefillQuery('Explain quantum computing like I\'m five')" class="p-4 bg-white border border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-blue-50/30 transition-all group">
+                    <i data-lucide="cpu" class="w-5 h-5 text-blue-500 mb-2"></i>
+                    <p class="font-medium text-gray-800">Explain quantum computing...</p>
+                    <p class="text-xs text-gray-500 group-hover:text-gray-600">Complex concepts simplified</p>
+                </button>
+                <button onclick="prefillQuery('What are the top travel destinations for 2024?')" class="p-4 bg-white border border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-blue-50/30 transition-all group">
+                    <i data-lucide="map" class="w-5 h-5 text-emerald-500 mb-2"></i>
+                    <p class="font-medium text-gray-800">Travel destinations 2024</p>
+                    <p class="text-xs text-gray-500 group-hover:text-gray-600">Fresh search results</p>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="message-list" class="max-w-3xl mx-auto space-y-8 hidden">
+            <!-- Messages injected here -->
+        </div>
+    </main>
+
+    <!-- Input Section -->
+    <footer class="p-4 sm:p-6 bg-gradient-to-t from-gray-50 via-gray-50/80 to-transparent">
+        <div class="max-w-3xl mx-auto relative">
+            <div class="relative flex items-end bg-white border border-gray-200 rounded-2xl shadow-xl focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                <textarea 
+                    id="user-input"
+                    placeholder="Ask anything..."
+                    rows="1"
+                    class="w-full p-4 pr-16 bg-transparent border-none focus:ring-0 text-gray-800 placeholder-gray-400 resize-none min-h-[56px] max-h-48 overflow-y-auto"
+                ></textarea>
+                
+                <div class="absolute right-2 bottom-2 flex items-center gap-2">
+                    <button id="search-toggle" class="p-2 text-gray-400 hover:text-blue-500 transition-colors" title="Enable Web Search">
+                        <i data-lucide="globe" class="w-5 h-5"></i>
+                    </button>
+                    <button id="send-btn" class="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md active:scale-95">
+                        <i data-lucide="arrow-up" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            <p class="text-center text-[10px] text-gray-400 mt-3 uppercase tracking-widest font-semibold">Powered by Gemini Pro with Google Search</p>
+        </div>
+    </footer>
+
+    <script>
+        const messageList = document.getElementById('message-list');
+        const welcomeState = document.getElementById('welcome-state');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const searchToggle = document.getElementById('search-toggle');
+        const chatContainer = document.getElementById('chat-container');
+
+        let chatHistory = [];
+        let isSearching = true; // Default to search mode
+
+        // Helper to safely refresh icons
+        function refreshIcons() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            } else {
+                console.warn('Lucide is not loaded yet.');
+            }
+        }
+
+        // Initialize icons when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshIcons();
+        });
+
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        searchToggle.addEventListener('click', () => {
+            isSearching = !isSearching;
+            searchToggle.classList.toggle('text-blue-600', isSearching);
+            searchToggle.classList.toggle('text-gray-400', !isSearching);
+        });
+
+        async function fetchGeminiResponse(query) {
+            const systemPrompt = "You are Nexus AI, a helpful and precise assistant. Use the provided search results to answer accurately. Always cite your sources using [1], [2], etc. Keep your tone professional yet accessible.";
+            const apiKey = ""; // Canvas handles this
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: query }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                tools: isSearching ? [{ "google_search": {} }] : []
+            };
+
+            // Implement simple exponential backoff
+            const maxRetries = 3;
+            let attempt = 0;
+            
+            while (attempt < maxRetries) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                    
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        const text = candidate.content.parts[0].text;
+                        let sources = [];
+                        
+                        const groundingMetadata = candidate.groundingMetadata;
+                        if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                            sources = groundingMetadata.groundingAttributions
+                                .map(attr => ({
+                                    uri: attr.web?.uri,
+                                    title: attr.web?.title
+                                }))
+                                .filter(s => s.uri && s.title);
+                        }
+                        return { text, sources };
+                    }
+                    throw new Error("Invalid response structure");
+                } catch (error) {
+                    attempt++;
+                    if (attempt === maxRetries) throw error;
+                    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+                }
+            }
+        }
+
+        function createMessageElement(role, content, sources = []) {
+            const div = document.createElement('div');
+            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} w-full`;
+            
+            const inner = document.createElement('div');
+            inner.className = `message-bubble ${role === 'user' ? 'bg-blue-600 text-white p-4 rounded-2xl' : 'bg-transparent text-gray-800'}`;
+            
+            if (role === 'user') {
+                inner.innerText = content;
+            } else {
+                // AI Response formatting
+                let html = `<div class="prose prose-sm max-w-none text-gray-800 leading-relaxed">${content.replace(/\n/g, '<br>')}</div>`;
+                
+                if (sources && sources.length > 0) {
+                    html += `
+                        <div class="mt-6 pt-4 border-t border-gray-100">
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Sources</p>
+                            <div class="flex flex-wrap gap-2">
+                                ${sources.map((s, i) => `
+                                    <a href="${s.uri}" target="_blank" class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium text-gray-600 transition-colors">
+                                        <span class="bg-gray-300 w-4 h-4 flex items-center justify-center rounded-full text-[10px] text-gray-700">${i + 1}</span>
+                                        ${s.title}
+                                    </a>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                inner.innerHTML = html;
+            }
+            
+            div.appendChild(inner);
+            return div;
+        }
+
+        async function handleSendMessage() {
+            const query = userInput.value.trim();
+            if (!query) return;
+
+            // Clear input and UI state
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            welcomeState.classList.add('hidden');
+            messageList.classList.remove('hidden');
+
+            // Add user message
+            messageList.appendChild(createMessageElement('user', query));
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+
+            // Show loading state
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'flex justify-start';
+            loadingDiv.innerHTML = `
+                <div class="message-bubble bg-gray-50 border border-gray-100 p-4 rounded-2xl flex items-center gap-3">
+                    <div class="loader"></div>
+                    <span class="text-sm text-gray-500 font-medium">
+                        ${isSearching ? 'Searching the web' : 'Thinking'}
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                    </span>
+                </div>
+            `;
+            messageList.appendChild(loadingDiv);
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+
+            try {
+                const response = await fetchGeminiResponse(query);
+                messageList.removeChild(loadingDiv);
+                messageList.appendChild(createMessageElement('ai', response.text, response.sources));
+                // Refresh icons in case AI returned markdown with icons (future proofing)
+                refreshIcons();
+            } catch (error) {
+                console.error(error);
+                if (loadingDiv.parentNode) messageList.removeChild(loadingDiv);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'bg-red-50 text-red-600 p-4 rounded-xl text-sm border border-red-100';
+                errorDiv.innerText = "Sorry, I encountered an error. Please check your connection and try again.";
+                messageList.appendChild(errorDiv);
+            }
+
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+
+        function prefillQuery(text) {
+            userInput.value = text;
+            userInput.dispatchEvent(new Event('input'));
+            handleSendMessage();
+        }
+
+        sendBtn.addEventListener('click', handleSendMessage);
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
