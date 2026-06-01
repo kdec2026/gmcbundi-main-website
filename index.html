@@ -17,6 +17,7 @@
     <!-- Preload Critical Images -->
     <link rel="preload" as="image" href="https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/GMC-n-hssj/main/file_000000003f1c720792a6d2acb3624341%20(1).png&output=webp&w=400">
     <link rel="preload" as="image" href="https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmcbundi-main-website/refs/heads/main/WhatsApp%20Image%202026-04-03%20at%2010.03.39%20PM.jpeg&output=webp&w=1200">
+    <link rel="preload" as="image" href="https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmcbundi-main-website/refs/heads/main/IMG_1954.JPG&output=webp&w=500">
 
     <link rel="canonical" href="https://www.gmcbundi.in/">
 
@@ -60,6 +61,8 @@
                         'fade-in': 'fadeIn 1s ease-in-out',
                         'tilt': 'tilt 10s infinite linear',
                         'shine': 'shine 1.5s infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
                     },
                     keyframes: {
                         scrollUp: {
@@ -78,6 +81,10 @@
                         shine: {
                             '0%': { left: '-100%' },
                             '100%': { left: '200%' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-10px) rotate(3deg)' },
                         }
                     }
                 }
@@ -160,9 +167,95 @@
             0% { transform: translateX(100%); }
             100% { transform: translateX(-100%); }
         }
+
+        /* Confetti overlay canvas styling */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 150;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased font-sans flex flex-col min-h-screen">
+
+    <!-- Confetti Overlaid Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Interactive Birthday Celebration Banner (At the absolute top of the body) -->
+    <div id="birthday-top-banner" class="relative bg-gradient-to-r from-indigo-900 via-pink-700 to-amber-600 text-white overflow-hidden border-b border-pink-400 shadow-xl transition-all duration-500 ease-in-out z-[45]">
+        <!-- Ambient Decorative Bubbles/Balloons -->
+        <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-pink-500/20 rounded-full blur-2xl animate-pulse-slow pointer-events-none"></div>
+        <div class="absolute right-10 -top-10 w-48 h-48 bg-amber-400/20 rounded-full blur-2xl animate-float pointer-events-none"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 py-6 md:py-8 flex flex-col md:flex-row items-center justify-between gap-6 relative">
+            
+            <!-- Roommate Birthday Profile Badge -->
+            <div class="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left w-full md:w-auto">
+                <div class="relative group cursor-pointer" onclick="triggerCelebrationConfetti()">
+                    <!-- Glowing Rainbow Ring around Mayank's photo -->
+                    <div class="absolute inset-0 bg-gradient-to-tr from-pink-500 via-yellow-400 to-indigo-500 rounded-full animate-spin blur-md opacity-75 group-hover:opacity-100 transition duration-300"></div>
+                    <div class="relative w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-2xl z-10 transition-transform duration-300 group-hover:scale-105">
+                        <img src="https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmcbundi-main-website/refs/heads/main/IMG_1954.JPG&output=webp&w=500" 
+                             alt="Birthday Boy Mayank" 
+                             onerror="this.src='https://placehold.co/400x400/fbbf24/ffffff?text=Mayank+🎂'"
+                             class="w-full h-full object-cover object-center">
+                    </div>
+                    <!-- Small interactive badge -->
+                    <span class="absolute bottom-1 right-1 bg-yellow-400 text-slate-950 font-bold px-2 py-0.5 text-xs rounded-full shadow-lg z-20 border border-white animate-bounce">
+                        🎂 20s
+                    </span>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                        <span class="bg-amber-400 text-slate-950 text-[11px] font-black tracking-widest uppercase px-2.5 py-0.5 rounded-full shadow-sm">
+                            Special Roommate Milestone
+                        </span>
+                        <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                            🔒 Admin Approved Banter
+                        </span>
+                    </div>
+                    <h2 class="text-2xl md:text-3.5xl font-serif font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-pink-100 to-white drop-shadow">
+                        Happy Birthday Mayank! 🎉
+                    </h2>
+                    <p class="text-sm md:text-base text-pink-100 font-medium">
+                        To my dear roommate <span class="underline decoration-amber-400 decoration-2">Mayank</span>! 🤥 (Yes, he claims he cleans the room, but we all know the truth!)
+                    </p>
+                    <p class="text-xs text-indigo-200 font-mono italic">
+                        #GMCBundiRoommateOfTheYear • #KeepSmiling • #ConfettiEnabled
+                    </p>
+                </div>
+            </div>
+
+            <!-- Interactivity Area (Blow Candles / Confetti triggers) -->
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto items-center flex-shrink-0">
+                <button onclick="triggerCelebrationConfetti()" 
+                        class="w-full sm:w-auto bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 text-slate-900 font-black px-6 py-3 rounded-xl shadow-lg hover:shadow-yellow-400/20 transition duration-300 active:scale-95 flex items-center justify-center gap-2 text-sm uppercase tracking-wider">
+                    <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-11.314l.707.707m11.314 11.314l.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"></path>
+                    </svg>
+                    Shower Confetti! 🎊
+                </button>
+                <button onclick="dismissBirthdayBanner()" 
+                        class="w-full sm:w-auto bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 text-white font-semibold px-4 py-3 rounded-xl text-sm transition duration-200 flex items-center justify-center gap-1.5"
+                        title="Dismiss banner and view college website">
+                    Continue to BMSA 
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Tiny Dismiss Close Button -->
+            <button onclick="dismissBirthdayBanner()" class="absolute top-2 right-2 text-white/50 hover:text-white transition duration-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
 
     <!-- Instagram Gradient Definition (Hidden) -->
     <svg width="0" height="0" class="absolute">
@@ -328,9 +421,9 @@
             </div>
             <div class="flex-grow overflow-hidden relative h-9">
                 <div class="absolute whitespace-nowrap py-2 animate-[marquee_35s_linear_infinite] hover:[animation-play-state:paused] flex items-center space-x-8 text-sm text-brand-900 font-medium">
+                    <span class="flex items-center"><span class="w-2 h-2 bg-pink-500 rounded-full mr-2 animate-pulse"></span><strong class="mr-1">CELEBRATING:</strong> Mayank's 20th Birthday! Trigger the confetti show at the top of the page! 🎉</span>
                     <span class="flex items-center"><span class="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span><strong class="mr-1">NEW:</strong> Tarakash 2.0 - Annual Festival Dates: 23 Feb to 1 March 2026.</span>
                     <span class="flex items-center"><span class="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span><strong class="mr-1">GALLERY:</strong> For watching or downloading college fest photos or videos, <a href="https://drive.google.com/drive/folders/1JSZ2fE9jH6GeSeGQ_HvX0VcTnRo7A81g?usp=sharing" target="_blank" class="ml-1 underline text-brand-700 hover:text-brand-900 font-bold">click here</a>.</span>
-                    <span class="flex items-center"><span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>Welcome to the official website of Bundi Medical Student Association (BMSA).</span>
                 </div>
             </div>
         </div>
@@ -344,7 +437,8 @@
             <div class="slide active" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmcbundi-main-website/refs/heads/main/WhatsApp%20Image%202026-04-03%20at%2010.03.39%20PM.jpeg&output=webp&w=1200');"></div>
             
             <!-- Slides 2-12 (Deferred Loading for Performance) -->
-            <!-- Slide 2: User Requested Photo -->
+            <!-- Slide 2: User Requested Photo of Mayank -->
+            <div class="slide" data-bg="url('https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmcbundi-main-website/refs/heads/main/IMG_1954.JPG&output=webp&w=1200')"></div>
             <div class="slide" data-bg="url('https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmcbundi-main-website/refs/heads/main/IMG_4666.JPG.jpeg&output=webp&w=1200')"></div>
             <div class="slide" data-bg="url('https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmcbundi-main-website/refs/heads/main/DSC_5108%4013477244.JPG&output=webp&w=1200')"></div>
             <div class="slide" data-bg="url('https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmc-bundi/refs/heads/main/69a7bf0cde49e61fc5dc104a.jpg&output=webp&w=1200')"></div>
@@ -626,6 +720,13 @@
                         <div class="animate-scroll-up notice-board-scroll flex flex-col">
                             <div class="p-4 space-y-3" id="notice-content">
                                 
+                                <!-- Birthday Special Notice Card -->
+                                <div class="block p-3 bg-gradient-to-tr from-amber-50 to-pink-50 rounded border border-amber-200 shadow-sm transition border-l-4 border-l-amber-500">
+                                    <span class="text-xs text-amber-700 font-extrabold font-mono uppercase bg-amber-100 px-1.5 py-0.5 rounded">Special Alert</span>
+                                    <p class="text-sm font-bold text-slate-800 mt-1">Mayank's Birthday Party Bash!</p>
+                                    <p class="text-[11px] text-slate-500 mt-1">GMC Bundi students are requested to report to Room 3 for free sweets (conditions apply: Mayank must sponsor them first!).</p>
+                                </div>
+
                                 <!-- DC Members Notice -->
                                 <a href="https://www.gmcbundi.in/DC%20member.pdf" target="_blank" class="block p-3 bg-white rounded border border-slate-100 shadow-sm hover:border-brand-400 hover:shadow-md transition group border-l-4 border-l-brand-600">
                                     <span class="text-xs text-brand-600 font-bold font-mono uppercase">18 Feb 2026</span>
@@ -637,7 +738,7 @@
                                 </a>
 
                                 <!-- Karyalaya Adesh -->
-                                <a href="https://www.gmcbundi.in/%E0%A4%95%E0%A4%BE%E0%A4%B0%E0%A5%8D%E0%A4%AF%E0%A4%BE%E0%A4%B2%E0%A4%AF%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%A5%E0%A4%BE%E0%A4%A2%E0%A4%BE%E0%A4%B0%E0%A5%8D%E0%A4%AF,%20%E0%A4%B0%E0%A4%BE%E0%A4%9C%E0%A4%95%E0%A5%80%E0%A4%AF%20%E0%A4%86%E0%A4%AF%E0%A5%81%E0%A4%B0%E0%A5%8D%E0%A4%B5%E0%A4%BF%E0%A4%9C%E0%A5%8D%E0%A4%9E%E0%A4%BE%E0%A4%A8%20%E0%A4%AE%E0%A4%B9%E0%A4%BE%E0%A4%B5%E0%A4%BF%E0%A4%A6%E0%A5%8D%E0%A4%AF%E0%A4%BE%E0%A4%B2%E0%A4%AF,%20%E0%A4%AC%E0%A5%82%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80%20(%E0%A4%B0%E0%A4%BE%E0%A4%9C%E0%A4%B8%E0%A5%8D%E0%A4%A5%E0%A4%BE%E0%A4%A8).pdf" target="_blank" class="block p-3 bg-white rounded border border-slate-100 shadow-sm hover:border-brand-400 hover:shadow-md transition group border-l-4 border-l-brand-600">
+                                <a href="https://www.gmcbundi.in/%E0%A4%95%E0%A4%BE%E0%A4%B0%E0%A5%8D%E0%A4%AF%E0%A4%BE%E0%A4%B2%E0%A4%AF%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%A5%E0%A4%BE%E0%A4%A2%E0%A4%BE%E0%A4%B0%E0%A5%8D%E0%A4%AF,%20%E0%A4%B0%E0%A4%BE%E0%A4%9C%E0%A4%95%E0%A5%80%E0%A4%AF%20%E0%A4%86%E0%A4%AF%E0%A5%81%E0%A4%B0%E0%A5%8D%E0%A4%B5%E0%A4%BF%E0%A4%9C%E0%A5%8D%E0%A4%9E%E0%A4%BE%E0%A4%A8%20%E0%A4%AE%E0%A4%B9%E0%A4%BE%E0%A4%B5%E0%A4%BF%E0%A4%A6%E0%A5%8D%E0%A4%AF%E0%A4%BE%E0%A4%B2%E0%A4%AF,%20%E0%A4%AC%E0%A5%82%E0%A4%A8%E0%A5%8D%E0%A4%A6%E0%A5%80%20(%E0%A4%B0%E0%A4%BE%E0%A4%9C%E0%A4%B5%E0%A5%8S%E0%A4%A5%E0%A4%BE%E0%A4%A8).pdf" target="_blank" class="block p-3 bg-white rounded border border-slate-100 shadow-sm hover:border-brand-400 hover:shadow-md transition group border-l-4 border-l-brand-600">
                                     <span class="text-xs text-brand-600 font-bold font-mono uppercase">Notice</span>
                                     <p class="text-sm font-hindi font-bold text-slate-800 group-hover:text-brand-700 mt-1">कार्यालय आदेश - प्रधानाचार्य कार्यालय</p>
                                     <span class="text-xs text-brand-500 mt-2 block">View Document</span>
@@ -747,13 +848,24 @@
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <!-- User Requested Photo (IMG_4666.JPG.jpeg) - First Slot -->
+                <!-- User Requested Birthday Boy Photo (IMG_1954.JPG) - Highlight Slot -->
+                <div class="h-48 overflow-hidden rounded-lg shadow-md group cursor-pointer relative ring-4 ring-yellow-400">
+                    <img src="https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmcbundi-main-website/refs/heads/main/IMG_1954.JPG&output=webp&w=400" 
+                         data-full="https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmcbundi-main-website/refs/heads/main/IMG_1954.JPG&output=webp&w=1200" 
+                         onerror="this.src='https://placehold.co/400x400/f59e0b/ffffff?text=Mayank+🎂'"
+                         class="w-full h-full object-cover transition duration-500 group-hover:scale-110" 
+                         alt="Special Birthday Mayank" 
+                         onclick="openLightbox(this.dataset.full)">
+                    <div class="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition duration-300 flex items-end justify-center pb-2">
+                        <span class="text-xs bg-yellow-400 text-slate-900 font-extrabold px-2 py-0.5 rounded shadow">Mayank's Birthday 🎂</span>
+                    </div>
+                </div>
+
+                <!-- Existing Image Highlights -->
                 <div class="h-48 overflow-hidden rounded-lg shadow-sm group cursor-pointer relative">
                     <img src="https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmcbundi-main-website/refs/heads/main/IMG_4666.JPG.jpeg&output=webp&w=400" data-full="https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmcbundi-main-website/refs/heads/main/IMG_4666.JPG.jpeg&output=webp&w=1200" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" alt="Special Highlights Photo" onclick="openLightbox(this.dataset.full)">
                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition duration-300 pointer-events-none"></div>
                 </div>
-
-                <!-- Existing Image Batch 1 -->
                 <div class="h-48 overflow-hidden rounded-lg shadow-sm group cursor-pointer relative">
                     <img src="https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmc-bundi/refs/heads/main/DSC00069%409416637.JPG&output=webp&w=400" data-full="https://wsrv.nl/?url=https://raw.githubusercontent.com/kanishk2007dev/gmc-bundi/refs/heads/main/DSC00069%409416637.JPG&output=webp&w=1200" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" alt="Gallery Image" onclick="openLightbox(this.dataset.full)" loading="lazy">
                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition duration-300 pointer-events-none"></div>
@@ -1235,17 +1347,22 @@
                 // Clone the notices block to create a seamless infinite loop
                 noticeScroll.appendChild(noticeContent.cloneNode(true));
             }
+
+            // Fire some initial birthday confetti on load!
+            setTimeout(() => {
+                triggerCelebrationConfetti();
+            }, 1800);
         });
 
         window.addEventListener('load', () => {
             const loader = document.getElementById('page-loader');
-            // Drastically reduced timeout for a much faster site entry
+            // Wait shortly to let images render
             setTimeout(() => {
                 loader.classList.add('opacity-0');
                 setTimeout(() => {
                     loader.style.display = 'none';
                 }, 300);
-            }, 1000); // 1 second total wait time
+            }, 1000); 
         });
 
         function toggleMenu() {
@@ -1338,6 +1455,114 @@
                 modal.style.display = 'none';
                 modal.classList.add('hidden');
             }, 300);
+        }
+
+        // Confetti physics engine logic
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let confetti = [];
+        const colors = ['#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#22c55e', '#84cc16', '#eab308', '#f97316'];
+        const emojis = ['🎈', '🎉', '🥳', '🎁', '🍰', '🎂', '🍭', '🍺', '👑'];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class ConfettiParticle {
+            constructor(isEmoji = false) {
+                this.isEmoji = isEmoji && Math.random() < 0.15; // 15% are emojis
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * -canvas.height - 20;
+                this.size = this.isEmoji ? Math.random() * 20 + 15 : Math.random() * 8 + 6;
+                this.speedX = Math.random() * 4 - 2;
+                this.speedY = Math.random() * 5 + 4;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.emoji = emojis[Math.floor(Math.random() * emojis.length)];
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 4 - 2;
+                this.opacity = 1;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.rotation += this.rotationSpeed;
+                if (this.y > canvas.height) {
+                    this.y = -20;
+                    this.x = Math.random() * canvas.width;
+                    this.opacity = 1;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.rotation * Math.PI) / 180);
+                ctx.globalAlpha = this.opacity;
+                if (this.isEmoji) {
+                    ctx.font = `${this.size}px serif`;
+                    ctx.fillText(this.emoji, 0, 0);
+                } else {
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                }
+                ctx.restore();
+            }
+        }
+
+        function initConfetti() {
+            confetti = [];
+            for (let i = 0; i < 150; i++) {
+                confetti.push(new ConfettiParticle(true));
+            }
+        }
+
+        let animationFrameId;
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let active = false;
+            confetti.forEach((p) => {
+                p.update();
+                p.draw();
+                if (p.opacity > 0) active = true;
+            });
+            animationFrameId = requestAnimationFrame(animateConfetti);
+        }
+
+        function triggerCelebrationConfetti() {
+            if (confetti.length === 0) {
+                initConfetti();
+                animateConfetti();
+            } else {
+                // Add fresh particles to burst on click
+                for (let i = 0; i < 80; i++) {
+                    confetti.push(new ConfettiParticle(true));
+                }
+            }
+            // Slowly decay over time
+            setTimeout(() => {
+                if (confetti.length > 150) {
+                    confetti.splice(150);
+                }
+            }, 6000);
+        }
+
+        // Dismiss Birthday Banner
+        function dismissBirthdayBanner() {
+            const banner = document.getElementById('birthday-top-banner');
+            banner.style.maxHeight = '0px';
+            banner.style.opacity = '0';
+            banner.style.padding = '0px';
+            banner.style.border = 'none';
+            // Stop the heavy animation frame to preserve CPU after dismissing
+            setTimeout(() => {
+                banner.style.display = 'none';
+                cancelAnimationFrame(animationFrameId);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }, 500);
         }
     </script>
 </body>
