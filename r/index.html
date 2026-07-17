@@ -8,6 +8,7 @@
 // In a production environment, you should use 'Secret' environment variables in the Cloudflare Dashboard.
 const USERNAME = "admin";
 const PASSWORD = "password123"; // Change this!
+const ADSENSE_SCRIPT_TAG = '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7150683500942089" crossorigin="anonymous"></script>';
 
 async function handleRequest(request) {
   const authHeader = request.headers.get("Authorization");
